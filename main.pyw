@@ -676,6 +676,11 @@ class Stickers(QWidget):
             self.oldPosition = event.globalPos()
 
 if __name__ == '__main__':
+    if not os.path.exists("utils/favourites"):
+        os.mkdir("utils/favourites")
+    if not os.path.exists("utils/lastpack"):
+        with open("utils/lastpack", "a") as _:
+            pass
     app = QApplication(sys.argv)
     stickerWindow = Stickers()
     stickerWindow.show()
