@@ -1,0 +1,3 @@
+pyside2
+win32clipboard
+win10toast
