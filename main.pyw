@@ -96,7 +96,9 @@ class Stickers(QWidget):
                                                     background: none;
                                                     border-radius: 5px;
                                                 }
-                                            
+                                                QScrollBar::handle {
+                                                    border-radius: 5px;
+                                                }
                                                 QScrollBar::handle::vertical {
                                                     background: #56acee;
                                                     border-radius: 5px;
@@ -336,7 +338,7 @@ class Stickers(QWidget):
         )
 
     def closeWindow(self):
-        quit(0)
+        QApplication.quit()
 
 
 
