@@ -7,3 +7,4 @@ Uses:
  - win10toast
  
 **Still work in progress**
+More info at http://mirkiri.ml/projects/Tele-py/
