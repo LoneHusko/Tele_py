@@ -273,8 +273,6 @@ class Stickers(QWidget):
                 os.remove("utils/favourites/"+file_name)
                 favButton.setText("Save to favourites")
                 favButton.clicked.connect(copyToFav)
-                self.reloadStickers()
-                self.loadStickers()
 
 
 
