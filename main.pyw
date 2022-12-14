@@ -1,4 +1,5 @@
-import sys, os, shutil
+import sys, os, shutil, threading, winsound, time
+
 from PySide2 import QtCore
 from PySide2.QtCore import *
 from PySide2.QtGui import *
@@ -7,6 +8,7 @@ from os.path import isfile, join
 from os import listdir
 import win32clipboard as clp
 from win10toast import ToastNotifier
+from utils import downloader
 
 """
 Uses PySide2, win32clipboard and win10toast modules.
@@ -271,7 +273,8 @@ class Stickers(QWidget):
                 os.remove("utils/favourites/"+file_name)
                 favButton.setText("Save to favourites")
                 favButton.clicked.connect(copyToFav)
-                # self.reloadStickers()
+                self.reloadStickers()
+                self.loadStickers()
 
 
 
@@ -283,15 +286,6 @@ class Stickers(QWidget):
         removeFav = QPushButton("Remove from favourites")
         removeFav.clicked.connect(removeFromFav)
 
-        browseButton = QPushButton("Browse stickers")
-        browseButton.clicked.connect(self.setStickerPath)
-        browseButton.setToolTip("Browse folders and load stickers from them")
-        setButton = QPushButton("Load stickers")
-        setButton.clicked.connect(self.checkStickers)
-        setButton.setToolTip("Load the stickers to the interface")
-        clearButton = QPushButton("Unload stickers")
-        clearButton.clicked.connect(self.unloadStickers)
-        clearButton.setToolTip("Unload the stickers from the interface")
 
         flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint)
         dlg.setWindowFlags(flags)
@@ -404,10 +398,10 @@ class Stickers(QWidget):
             if self.stickersLoaded:
                 self.unloadStickers()
                 self.loadStickers()
-            # self.dropError("No stickers are loaded!")
 
     def loadFavourites(self):
         self.path = "utils/favourites/"
+        self.message.setText(f"Path: {self.path}")
         self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         self.unloadStickers()
         self.loadStickers()
@@ -416,9 +410,147 @@ class Stickers(QWidget):
         self.unloadStickers()
         self.loadStickers()
 
+    def downloadSticker(self):
+
+
+
+        def download():
+            def thread():
+                failed = False
+                with open("utils/bottoken", "w") as token:
+                    token.write(botToken.text())
+                try:
+                    asd = downloader.StickerDownloader(botToken.text())
+
+                    name = stickerURL.text()
+                    if not os.path.exists(f"downloads/{name}") and name != "":
+                        if name != "":
+                            name = (name.split('/')[-1])
+
+
+                            print('=' * 60)
+                            _ = asd.get_sticker_set(name)
+
+                            print('-' * 60)
+                            _ = asd.download_sticker_set(_)
+
+                            message.setStyleSheet("color: #009f3b; background-color: #00260E;")
+                            message.setText("Download completed!")
+                            winsound.PlaySound("C:\Windows\Media\Windows Notify Messaging.wav", winsound.SND_FILENAME)
+                        else:
+                            message.setStyleSheet("color:red; background-color: #540612;")
+                            message.setText("Invalid URL!")
+                            winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
+                    elif name == "":
+                        message.setStyleSheet("color:red; background-color: #540612;")
+                        message.setText("Invalid URL!")
+                        winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
+                    elif os.path.exists(f"downloads/{name}"):
+                        message.setStyleSheet("color:red; background-color: #540612;")
+                        message.setText("Stickers already downloaded!")
+                        winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
+
+                except:
+                    message.setStyleSheet("color:red; background-color: #540612;")
+                    message.setText("Download failed! Please check the token and the URL!")
+                    winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
+
+            x = threading.Thread(target=thread)
+            message.setStyleSheet("color: #999999; background-color: rgba(102, 102, 102, 0.25);")
+            message.setText("Downloading, please wait...")
+            x.start()
+
+        dlg = QDialog()
+        dlg.setStyleSheet("""
+                QToolTip {
+                        background-color: #182644;
+                        border: 1px solid #56acee;
+                        color: #999999;
+                }
+                QWidget {
+                    background-color: #182644;
+                    border: 1px solid #999999;
+                    border-radius: 5px;
+                }
+                QLineEdit {
+                    border-radius: 3px;
+                    color: #999999;
+                    height: 30px;
+                }
+                QLabel {
+                    border: none;
+                    background-color: rgba(102, 102, 102, 0.25);
+                    border-radius: 3px;
+                    width: 50px;
+                    height: 30px;
+                    color: #999999;
+                    padding: 5px;
+                    text-align: center;
+                }
+                QPushButton {
+                    border: none;
+                    background-color: rgba(102, 102, 102, 0.25);
+                    border-radius: 3px;
+                    width: 50px;
+                    height: 30px;
+                    color: #999999;
+                }
+    
+                QPushButton:hover {
+                    background-color: #666666;
+                }
+    
+                QPushButton:pressed {
+                    background-color: #111111;
+                }
+                QScrollArea{
+                    border: none;
+                }
+                QGridLayout{
+                    border: none;
+                }
+                """)
+        dlg.setWindowTitle("Download Stickers")
+        QBtn = QDialogButtonBox.Ok
+        dlg.buttonBox = QDialogButtonBox(QBtn)
+        dlg.buttonBox.accepted.connect(dlg.accept)
+        dlg.buttonBox.rejected.connect(dlg.reject)
+        message = QLabel()
+        message.setFixedHeight(30)
+        message.setAlignment(Qt.AlignCenter)
+        botToken = QLineEdit()
+        botToken.setPlaceholderText("Token")
+        with open("utils/bottoken", "r") as token:
+            _ = token.read()
+            botToken.setText(_)
+
+
+        stickerURL = QLineEdit()
+        stickerURL.setPlaceholderText("Sticker URL")
+        downloadButton = QPushButton("Download")
+        downloadButton.clicked.connect(download)
+
+        flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint)
+        dlg.setWindowFlags(flags)
+
+        dlg.setMinimumSize(400, 232)
+
+        dlayout = QVBoxLayout()
+        dlayout.addWidget(message)
+        dlayout.addWidget(botToken)
+        dlayout.addWidget(stickerURL)
+        dlayout.addWidget(downloadButton)
+        dlayout.addWidget(dlg.buttonBox)
+
+        dlg.setLayout(dlayout)
+        # message.setText("Downloading, please wait...")
+        result = dlg.exec_()
+
+
     def selectStickers(self):
 
         dlg = QDialog()
+        vertical = QVBoxLayout()
         dlg.setStyleSheet("""
                 QToolTip {
                         background-color: #182644;
@@ -483,6 +615,8 @@ class Stickers(QWidget):
         clearButton = QPushButton("Unload stickers")
         clearButton.clicked.connect(self.unloadStickers)
         clearButton.setToolTip("Unload the stickers from the interface")
+        downloadButton = QPushButton("Download stickers")
+        downloadButton.clicked.connect(self.downloadSticker)
 
         flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint)
         dlg.setWindowFlags(flags)
@@ -490,15 +624,20 @@ class Stickers(QWidget):
         dlg.setMinimumSize(400, 232)
 
         dlayout = QVBoxLayout()
+        self.message = QLabel()
         if len(self.path):
-            self.message = QLabel(f"Path: {self.path}")
-            dlayout.addWidget(self.message)
+            self.message.setText(f"Path: {self.path}")
+        else:
+            self.message.setText("Path:")
+        dlayout.addWidget(self.message)
+        self.message.setFixedHeight(30)
 
         dlayout.addWidget(browseButton)
         dlayout.addWidget(setButton)
         dlayout.addWidget(self.favButton)
         # dlayout.addWidget(reloadButton)
         dlayout.addWidget(clearButton)
+        dlayout.addWidget(downloadButton)
         dlayout.addWidget(dlg.buttonBox)
 
         dlg.setLayout(dlayout)
@@ -629,7 +768,7 @@ class Stickers(QWidget):
     def dropInfo(self, message):
         msgBox = QMessageBox(self)
         msgBox.setIcon(QMessageBox.Information)
-        msgBox.setWindowTitle("Error")
+        msgBox.setWindowTitle("Information")
         msgBox.setText(message)
         msgBox.setStyleSheet("""
             QMessageBox::Watning::Icon {
@@ -682,6 +821,9 @@ if __name__ == '__main__':
         os.mkdir("utils/favourites")
     if not os.path.exists("utils/lastpack"):
         with open("utils/lastpack", "a") as _:
+            pass
+    if not os.path.exists("utils/bottoken"):
+        with open("utils/bottoken", "a") as _:
             pass
     app = QApplication(sys.argv)
     stickerWindow = Stickers()
