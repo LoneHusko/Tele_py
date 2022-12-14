@@ -3,7 +3,7 @@ Lets you send Telegram stickers on any chat platform (you need to download them 
 
 Uses:
  - PySide2
- - win32clipboard
+ - win32clipboard (from module pywin32)
  - win10toast
  
 **Still work in progress**
