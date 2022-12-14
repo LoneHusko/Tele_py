@@ -138,23 +138,3 @@ class StickerDownloader:
         end = time.time()
         print('Time taken to convert {} stickers - {:.3f}s'.format(len(png_files), end - start))
         print()
-
-
-if __name__ == "__main__":
-    downloader = StickerDownloader(TOKEN)
-    print('Welcome to Telegram Downloader..')
-    names = []
-    while True:
-        name = input("Enter sticker_set url (leave blank to stop): ").strip()
-        if name == '':
-            break
-        names.append(name.split('/')[-1])
-
-    for sset in names:
-        print('=' * 60)
-        _ = downloader.get_sticker_set(sset)
-        if _ is None:
-            continue
-        print('-' * 60)
-        _ = downloader.download_sticker_set(_)
-        print('-' * 60)
