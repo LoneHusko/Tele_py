@@ -127,14 +127,3 @@ class StickerDownloader:
         print()
 
         return downloads
-
-    @staticmethod
-    def convert_file(_input, _output):
-        command = 'dwebp -quiet "{}" -o "{}"'.format(_input, _output)
-        check_output(command, shell=True)
-        return _output
-
-
-        end = time.time()
-        print('Time taken to convert {} stickers - {:.3f}s'.format(len(png_files), end - start))
-        print()
