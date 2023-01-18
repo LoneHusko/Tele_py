@@ -39,19 +39,23 @@ class Stickers(QWidget):
         self.tray_icon.activated.connect(self.trayIconHandle)
 
         #Basic settings
+        config_object = ConfigParser()
+        config_object.read("utils/config.ini")
+        settings = config_object["SETTINGS"]
+        self.styleLocation = "stylesheet/"+settings["stylesheet"]
         self.visible = True
         self.stickersLoaded = False
         self.path = ""
         self.settings = []
-        self.onlyfiles = []
+        # self.onlyfiles = []
         try:
             with open("utils/lastpack", "r") as pack:
                 self.path = pack.read()
-                self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+                # self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         except:
             pass
         try:
-            with open("utils/style_main.css", "r") as style:
+            with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
                 self.setStyleSheet(str(style.read()))
                 self.tray_menu.setStyleSheet(str(style.read()))
         except:
@@ -86,39 +90,65 @@ class Stickers(QWidget):
 
 
 
-        horizontalSpacer = QSpacerItem(440,30)
-        hLayout.addItem(horizontalSpacer)
+        self.message = QLabel()
+        self.message.setFixedHeight(30)
+        self.message.setFixedWidth(370)
+        if self.path == "utils/favourites/":
+            self.animateMessage("Favourites", None, False)
+        else:
+            self.animateMessage(self.path, "Path: ", False)
+        hLayout.addWidget(self.message)
 
-        loadStickers = QPushButton()
+        self.loadStickersBtn = QPushButton()
         size = QSize(30,30)
-        loadStickers.setMaximumSize(30,30)
-        loadStickers.setIcon(QIcon("utils/loadStickers.png"))
-        loadStickers.setIconSize(size)
-        loadStickers.setToolTip("Stickers")
-        loadStickers.clicked.connect(lambda :self.selectStickers())
-        hLayout.addWidget(loadStickers)
+        self.loadStickersBtn.setMaximumSize(30,30)
+        self.loadStickersBtn.setIcon(QIcon(f"utils/{self.styleLocation}/loadStickers.png"))
+        self.loadStickersBtn.setIconSize(size)
+        self.loadStickersBtn.setToolTip("Stickers")
+        self.loadStickersBtn.clicked.connect(lambda :self.selectStickers())
+        hLayout.addWidget(self.loadStickersBtn)
 
-        settings = QPushButton()
+        self.settings = QPushButton()
         size = QSize(25,25)
-        settings.setMaximumSize(30,30)
-        settings.setIcon(QIcon("utils/settings.png"))
-        settings.setToolTip("Settings")
-        settings.setIconSize(size)
-        settings.clicked.connect(lambda :self.settingOpen())
-        hLayout.addWidget(settings)
+        self.settings.setMaximumSize(30,30)
+        self.settings.setIcon(QIcon(f"utils/{self.styleLocation}/settings.png"))
+        self.settings.setToolTip("Settings")
+        self.settings.setIconSize(size)
+        self.settings.clicked.connect(lambda :self.settingOpen())
+        hLayout.addWidget(self.settings)
 
         vLayout.addLayout(hLayout)
-        closeBtn = QPushButton()
+        self.closeBtn = QPushButton()
         size = QSize(30,30)
-        closeBtn.setMaximumSize(30,30)
-        closeBtn.setIcon(QIcon("utils/close.png"))
-        closeBtn.setIconSize(size)
-        closeBtn.setToolTip("Close")
-        closeBtn.clicked.connect(lambda :self.closeWindow())
-        hLayout.addWidget(closeBtn)
+        self.closeBtn.setMaximumSize(30,30)
+        self.closeBtn.setIcon(QIcon(f"utils/{self.styleLocation}/close.png"))
+        self.closeBtn.setIconSize(size)
+        self.closeBtn.setToolTip("Close")
+        self.closeBtn.clicked.connect(lambda :self.closeWindow())
+        hLayout.addWidget(self.closeBtn)
         vLayout.addWidget(scroll)
         self.setLayout(vLayout)
-
+    def animateMessage(self, text, unanimated, isError):
+        if isError:
+            self.message.setObjectName("error")
+        else:
+            self.message.setObjectName("")
+        with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
+            self.message.setStyleSheet(str(style.read()))
+            styleSheet = style
+        def thread():
+            if unanimated == None:
+                prefix = ""
+            else:
+                prefix = unanimated
+            templist = []
+            self.message.setText(prefix)
+            for i in list(text):
+                templist.append(i)
+                self.message.setText(prefix+"".join(templist))
+                time.sleep(0.03)
+        x = threading.Thread(target=thread)
+        x.start()
     def windowAppear(self):
         if not self.visible:
             flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint)
@@ -138,7 +168,7 @@ class Stickers(QWidget):
     def preview(self):
         dlg = QDialog()
         try:
-            with open("utils/style_preview.css", "r") as style:
+            with open(f"utils/{self.styleLocation}/style_preview.css", "r") as style:
                 dlg.setStyleSheet(str(style.read()))
         except:
             pass
@@ -153,7 +183,7 @@ class Stickers(QWidget):
         button.setMinimumSize(350,350)
         button.setMaximumSize(350,350)
         try:
-            with open("utils/style_main.css", "r") as style:
+            with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
                 button.setStyleSheet(str(style.read()))
         except:
             pass
@@ -206,7 +236,7 @@ class Stickers(QWidget):
             print(f"Preview opened for: {sticker_location}")
             dlg.exec_()
         else:
-            self.dropError("File not found!")
+            self.dropError(f"File not found! ({sticker_location})")
     def stickerCopy(self):
         def send_to_clipboard(clip_type, data):
             clp.OpenClipboard()
@@ -251,7 +281,7 @@ class Stickers(QWidget):
                 threaded = True,
             )
         else:
-            self.dropError("File not found!")
+            self.dropError(f"File not found! ({file_path})")
 
     def closeWindow(self):
         config_object = ConfigParser()
@@ -264,17 +294,25 @@ class Stickers(QWidget):
         else:
             self.setVisible(False)
             self.visible = False
+    def changeStyle(self):
+        # print(QAction.sender(styleListBtn).objectName())
+        self.location = self.stylesheets[QPushButton.sender(self)]
+
+        with open(f"utils/stylesheet/{self.location}/customname", "r") as f:
+            self.settingsMessage.setText(f"Press 'Apply stylesheet' to apply theme '{f.read()}'")
 
     def settingOpen(self):
         dlg = QDialog()
         # dlg.setAttribute(Qt.WA_TranslucentBackground)
         dlg.setWindowModality(Qt.NonModal)
+        dlg.setFixedWidth(320)
         def applySyle():
             try:
-                with open("utils/style_settings.css", "r") as style:
+                with open(f"utils/{self.styleLocation}/style_settings.css", "r") as style:
                     dlg.setStyleSheet(str(style.read()))
             except:
                 pass
+
         def dcCopy():
             if not dcComp.objectName() == "activeBtn":
                 config_object = ConfigParser()
@@ -356,33 +394,95 @@ class Stickers(QWidget):
                     config_object.write(conf)
             dlg.setVisible(False)
         def addStyle():
-            styles = ["utils/style_download.css", "utils/style_main.css", "utils/style_menu.css", "utils/style_preview.css", "utils/style_quickLoad.css", "utils/style_settings.css"]
+            config_object = ConfigParser()
+            config_object.read("utils/config.ini")
+            settings = config_object["SETTINGS"]
+            settings["stylesheet"] = self.location
+
+            with open('utils/config.ini', 'w') as conf:
+                config_object.write(conf)
+            self.styleLocation = "stylesheet/"+self.location
+            styles = [f"utils/{self.styleLocation}/style_download.css", f"utils/{self.styleLocation}/style_main.css", f"utils/{self.styleLocation}/style_menu.css", f"utils/{self.styleLocation}/style_preview.css", f"utils/{self.styleLocation}/style_quickLoad.css", f"utils/{self.styleLocation}/style_settings.css"]
             missing = []
+            try:
+                self.loadStickersBtn.setIcon(QIcon(f"utils/{self.styleLocation}/loadStickers.png"))
+                self.closeBtn.setIcon(QIcon(f"utils/{self.styleLocation}/close.png"))
+                self.settings.setIcon(QIcon(f"utils/{self.styleLocation}/settings.png"))
+            except:
+                pass
+
             for i in styles:
                 if not os.path.exists(i):
                     missing.append(i)
-                elif i == "utils/style_main.css" and i not in missing:
-                    with open("utils/style_main.css", "r") as style:
+                elif i == f"utils/{self.styleLocation}/style_main.css" and i not in missing:
+                    with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
                         self.setStyleSheet(str(style.read()))
-                elif i == "utils/style_settings.css" and i not in missing:
-                    with open("utils/style_settings.css", "r") as style:
+                        self.tray_menu.setStyleSheet(str(style.read()))
+                        self.message.setStyleSheet(str(style.read()))
+                elif i == f"utils/{self.styleLocation}/.css" and i not in missing:
+                    with open(f"utils/{self.styleLocation}/style_settings.css", "r") as style:
                         dlg.setStyleSheet(str(style.read()))
             if len(missing):
                 self.dropError(", ".join(missing)+" was not found!")
-
-
-        #Build dialog window
-        applySyle()
-        dlg.setWindowTitle("Settings")
-        QBtn = QDialogButtonBox.Ok
-        dlg.buttonBox = QDialogButtonBox(QBtn)
-        dlg.buttonBox.accepted.connect(save)
-        applyStyleBtn = QPushButton("Read stylesheet")
-        applyStyleBtn.clicked.connect(addStyle)
+            dlg.accept()
 
         config_object = ConfigParser()
         config_object.read("utils/config.ini")
         settings = config_object["SETTINGS"]
+        #Build dialog window
+        applySyle()
+        dlg.setWindowTitle("Settings")
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        dlg.buttonBox = QDialogButtonBox(QBtn)
+        dlg.buttonBox.accepted.connect(save)
+        dlg.buttonBox.rejected.connect(lambda: dlg.setVisible(False))
+        applyStyleBtn = QPushButton("Apply stylesheet")
+        applyStyleBtn.clicked.connect(addStyle)
+
+        menu = QMenu()
+        elements = []
+        self.stylesheets = {}
+        try:
+            with open(f"utils/{self.styleLocation}/style_quickLoad.css", "r") as style:
+                menu.setStyleSheet(str(style.read()))
+        except:
+            pass
+        if os.path.exists("utils/stylesheet/"):
+            folders = [ name for name in os.listdir("utils/stylesheet/") if os.path.isdir(os.path.join("utils/stylesheet/", name)) ]
+            if len(folders):
+                for i in folders:
+                    active = False
+                    if settings["stylesheet"] == i:
+                        active = True
+                    try:
+                        with open(f"utils/stylesheet/{i}/customname") as f:
+                            if active:
+                                name = f.read()+" (Active)"
+                            else:
+                                name = f.read()
+                    except:
+                        if active:
+                            name = i+" (Active)"
+                        else:
+                            name = i
+                    action = QAction(name)
+                    action.setObjectName(i)
+                    self.stylesheets[action] = i
+                    action.triggered.connect(self.changeStyle)
+                    elements.append(action)
+
+                    menu.addAction(action)
+                for i in elements:
+                    menu.addAction(i)
+        else:
+            menu.addAction("No stylesheets found").setEnabled(False)
+
+        styleListBtn = QPushButton("Select stylesheet")
+        # dropdown = buildMenu()
+        styleListBtn.setMenu(menu)
+
+        self.settingsMessage = QLabel("Settings")
+        self.settingsMessage.setFixedHeight(30)
 
         columnsGroup = QGroupBox("Columns")
         columnsLayout = QHBoxLayout()
@@ -397,7 +497,6 @@ class Stickers(QWidget):
         maxLayout = QHBoxLayout()
         maxfileGroup.setLayout(maxLayout)
         maxFileIn = QLineEdit()
-        maxFileIn.setFixedHeight(30)
         maxLayout.addWidget(maxFileIn)
         maxFileIn.setPlaceholderText("Recommended is 120")
         maxFileIn.setValidator(QIntValidator())
@@ -443,11 +542,12 @@ class Stickers(QWidget):
         compLayout.addWidget(gimpComp, 0, 1)
         groupComp.setLayout(compLayout)
 
-
+        dlayout.addWidget(self.settingsMessage)
         dlayout.addWidget(columnsGroup)
         dlayout.addWidget(maxfileGroup)
         dlayout.addWidget(groupComp)
         dlayout.addWidget(hidesGroup)
+        dlayout.addWidget(styleListBtn)
         dlayout.addWidget(applyStyleBtn)
         dlayout.addWidget(dlg.buttonBox)
 
@@ -464,11 +564,7 @@ class Stickers(QWidget):
 
     def loadFavourites(self):
         self.path = "utils/favourites/"
-        try:
-            self.message.setText(f"Path: {self.path}")
-        except:
-            pass
-        self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+        # self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         self.unloadStickers()
         self.loadStickers()
 
@@ -501,29 +597,34 @@ class Stickers(QWidget):
                             if customName.text():
                                 with open(f"downloads/{name}/customname", "wt") as f:
                                     f.write(customName.text())
-                            message.setStyleSheet("color: #009f3b; background-color: #00260E;")
+                            message.setObjectName("success")
+                            message.setStyleSheet(styleSheet)
                             message.setText("Download completed!")
                             winsound.PlaySound("C:\Windows\Media\Windows Notify Messaging.wav", winsound.SND_FILENAME)
                         else:
                             dlg.buttonBox.accepted.connect(dlg.accept)
-                            message.setStyleSheet("color:red; background-color: #540612;")
+                            message.setObjectName("error")
+                            message.setStyleSheet(styleSheet)
                             message.setText("Invalid URL!")
                             winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
                     elif name == "":
                         dlg.buttonBox.accepted.connect(dlg.accept)
-                        message.setStyleSheet("color:red; background-color: #540612;")
+                        message.setObjectName("error")
+                        message.setStyleSheet(styleSheet)
                         message.setText("Invalid URL!")
                         winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
 
                     elif os.path.exists(f"downloads/{name}"):
                         dlg.buttonBox.accepted.connect(dlg.accept)
-                        message.setStyleSheet("color:red; background-color: #540612;")
+                        message.setObjectName("error")
+                        message.setStyleSheet(styleSheet)
                         message.setText("Stickers already downloaded!")
                         winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
 
                 except:
                     dlg.buttonBox.accepted.connect(dlg.accept)
-                    message.setStyleSheet("color:red; background-color: #540612;")
+                    message.setObjectName("error")
+                    message.setStyleSheet(styleSheet)
                     message.setText("Download failed! Please check the token and the URL!")
                     winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
 
@@ -534,13 +635,16 @@ class Stickers(QWidget):
                     message.setStyleSheet(str(style))
             except:
                 pass
+            message.setObjectName("")
+            message.setStyleSheet(styleSheet)
             message.setText("Downloading, please wait...")
             x.start()
 
         dlg = QDialog()
         try:
-            with open("utils/style_download.css", "r") as style:
+            with open(f"utils/{self.styleLocation}/style_download.css", "r") as style:
                 dlg.setStyleSheet(str(style.read()))
+                styleSheet = str(style.read())
         except:
             pass
         dlg.setWindowTitle("Download Stickers")
@@ -585,7 +689,6 @@ class Stickers(QWidget):
 
     def quickLoadPrepare(self):
         self.path = self.loadPath[QPushButton.sender(self)]
-        self.message.setText(f"Path: {self.path}")
         try:
             with open("utils/lastpack", "w") as pack:
                 pack.write(self.path)
@@ -597,7 +700,7 @@ class Stickers(QWidget):
         self.loadPath = {}
         menu = QMenu()
         try:
-            with open("utils/style_quickLoad.css", "r") as style:
+            with open(f"utils/{self.styleLocation}/style_quickLoad.css", "r") as style:
                 menu.setStyleSheet(str(style.read()))
         except:
             pass
@@ -631,7 +734,7 @@ class Stickers(QWidget):
         self.stickerDlg = QDialog()
         vertical = QVBoxLayout()
         try:
-            with open("utils/style_menu.css", "r") as style:
+            with open(f"utils/{self.styleLocation}/style_menu.css", "r") as style:
                 self.stickerDlg.setStyleSheet(str(style.read()))
         except:
             pass
@@ -668,12 +771,6 @@ class Stickers(QWidget):
         self.stickerDlg.setMinimumSize(400, 232)
 
         dlayout = QVBoxLayout()
-        self.message = QLabel()
-        if len(self.path):
-            self.message.setText(f"Path: {self.path}")
-        else:
-            self.message.setText("Path:")
-        dlayout.addWidget(self.message)
         self.message.setFixedHeight(30)
 
         dlayout.addWidget(qLoad)
@@ -703,30 +800,28 @@ class Stickers(QWidget):
                     self.message.setText(f"Path: {self.path}")
                 except:
                     pass
-                self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+                # self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
 
             else:
                 self.dropError(f"Too many stickers! The limit is {max['max_stickers_loadable']}.")
 
     def loadStickers(self):
+        error = False
         if os.path.exists(self.path):
-            self.onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+            br = False
+            onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f)) if f.split(".")[-1].lower() == "jpg" or f.split(".")[-1].lower() == "png" or f.split(".")[-1].lower() == "webp"]
             if not self.stickersLoaded and len(self.path):
-                #Read config.ini file
                 config_object = ConfigParser()
                 config_object.read("utils/config.ini")
-
-                #Get the password
                 settings = config_object["SETTINGS"]
                 columns = int(settings["columns"])
                 width_height = 400/columns
                 if self.path[-1] != "/":
                     self.path += "/"
-                br = False
-                onlyfiles = []
-                for i in self.onlyfiles:
-                    if i.split(".")[-1].lower() == "jpg" or i.split(".")[-1].lower() == "png" or i.split(".")[-1].lower() == "webp":
-                        onlyfiles.append(i)
+                # onlyfiles = []
+                # for i in self.onlyfiles:
+                #     if i.split(".")[-1].lower() == "jpg" or i.split(".")[-1].lower() == "png" or i.split(".")[-1].lower() == "webp":
+                #         onlyfiles.append(i)
                 file = 0
                 button_list = []
                 self.stickers = {}
@@ -735,6 +830,8 @@ class Stickers(QWidget):
                     conf.read("utils/config.ini")
                     max = conf["SETTINGS"]
                     if len(onlyfiles) > int(max["max_stickers_loadable"]):
+                        br = True
+                        error = True
                         self.dropError(f"Too many stickers! The limit is {max['max_stickers_loadable']}.")
                         onlyfiles = []
                         break
@@ -763,15 +860,23 @@ class Stickers(QWidget):
                             br = True
                             break
 
-                print(f"Loaded {file} files out of {len(self.onlyfiles)}")
                 try:
                     with open("utils/lastpack", "w") as pack:
                         pack.write(self.path)
                 except:
                     pass
                 self.stickersLoaded = True
+                if not error:
+                    if self.message.text() != "Favourites" and self.path == "utils/favourites/":
+                        self.animateMessage("Favourites", None, False)
+                    elif self.message.text() != "Favourites" and self.path != "utils/favourites/":
+                        self.animateMessage(self.path, "Path: ", False)
+                    elif self.message.text() == "Favourites" and self.path != "utils/favourites/":
+                        self.animateMessage("Path: "+self.path, None, False)
+                    elif self.message.text() == "Favourites" and self.path == "utils/favourites/":
+                        pass
         else:
-            self.dropError("The given path does not exist!")
+            self.dropError(f"The given path does not exist! ({self.path})")
 
 
 
@@ -788,49 +893,32 @@ class Stickers(QWidget):
         self.stickersLoaded = False
 
     def dropError(self, message):
+        # C:\Windows\Media\Windows Notify Email.wav
+        # "C:\Windows\Media\Windows Notify Calendar.wav
         def playsound():
-            winsound.PlaySound("C:\Windows\Media\Windows Notify Calendar.wav", winsound.SND_FILENAME)
+            winsound.PlaySound("C:\Windows\Media\Windows Notify Email.wav", winsound.SND_FILENAME)
+        def thread():
+            self.animateMessage(message, None, True)
         x = threading.Thread(target=playsound)
+        y = threading.Thread(target=thread)
+        y.start()
         x.start()
-        msgBox = QMessageBox(self)
-        # Create a QPixmap object with the desired image file
-        icon_path = "utils/warning.png"
-        icon = QPixmap(icon_path)
 
-        # Resize the QPixmap object
-        icon = icon.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        # Set the icon for the QMessageBox
-        msgBox.setIconPixmap(icon)
-
-        msgBox.setWindowTitle("Error")
-        msgBox.setText(message)
-
-        msgBox.setStyleSheet("""
-            QLabel{
-                border: none;
-                background-color: rgba(102, 102, 102, 0.25);
-                border-radius: 3px;
-                height: 30px !important;
-                color: #999999;
-                padding: 5px;
-            }
-            QPushButton {
-                border: none;
-                background-color: rgba(102, 102, 102, 0.25);
-                border-radius: 3px;
-                width: 50px;
-                height: 30px;
-                color: #999999;
-            }
-            QPushButton:hover {
-                background-color: #666666;
-            }
-            QPushButton:pressed {
-                background-color: #111111;
-            }
-        """)
-        msgBox.show()
+        # msgBox = QMessageBox(self)
+        # # Create a QPixmap object with the desired image file
+        # icon_path = "utils/warning.png"
+        # icon = QPixmap(icon_path)
+        #
+        # # Resize the QPixmap object
+        #
+        # # Set the icon for the QMessageBox
+        # msgBox.setIconPixmap(icon)
+        #
+        # msgBox.setWindowTitle("Error")
+        # msgBox.setText(message)
+        #
+        #
+        # msgBox.show()
 
 
 

@@ -1,0 +1,21 @@
+/* The .css extension is only because it is recognized by most code editors so it makes it easier to edit it, but this is qss not css */
+QMenu::item:selected {
+    background-color: rgba(102, 102, 102, 0.6);
+}
+QMenu::item:pressed {
+    background-color: #111111;
+}
+QMenu::item {
+    color: #999999;
+}
+QMenu {
+    background-color: #182644;
+    border: 1px solid #475a85;
+    border-radius: 5px;
+}
+QMenu::item:disabled {
+    margin: 3px;
+}
+QMenu::item:disabled:selected {
+    background-color: none;
+}
