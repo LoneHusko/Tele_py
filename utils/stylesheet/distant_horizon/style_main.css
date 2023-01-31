@@ -1,0 +1,196 @@
+/* The .css extension is only because it is recognized by most code editors so it makes it easier to edit it, but this is qss not css */
+QToolTip {
+    background-color: #182644;
+    border: 1px solid #56acee;
+    color: #999999;
+    border-radius: 0;
+}
+#central_widget {
+    border: none;
+    border-radius: 5px;
+    background: qlineargradient( x1:0 y1:1, x2:1 y2:0, stop:0 #355494, stop:1 #182644);
+}
+#no_bg_widget {
+    background: transparent;
+}
+#menu {
+    background-color: rgb(24, 38, 68);
+    border: 1px solid #475a85;
+    border-radius: 5px;
+}
+/* #preview {
+    background-color: rgba(24, 38, 68, .8);
+} */
+#no_bg_btn {
+    border: none;
+    background-color: none;
+    border-radius: 3px;
+}
+#no_bg_btn:hover {
+    background-color: rgba(102, 102, 102, 0.6);
+}
+#no_bg_btn:pressed {
+    background-color: rgba(17, 17, 17, 0.6);
+}
+QLabel {
+    border: none;
+    border-radius: 3px;
+    width: 50px;
+    height: 30px;
+    color: #999999;
+    padding: 5px;
+    background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 rgba(102, 102, 102, 0.25), stop:1 transparent)
+}
+#notification {
+    font-weight: bold;
+    background-color: qlineargradient( x1:1 y1:1, x2:0 y2:0, stop:0 #182644, stop:1 #355494);
+}
+#success{
+    color: #009f3b; 
+    background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #00260E, stop:1 transparent);
+}
+#error{
+    color:red; 
+    background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #540612, stop:1 transparent);
+}
+QPushButton {
+    border: none;
+    /* background-color: rgba(102, 102, 102, 0.25); */
+    border-radius: 3px;
+    color: #999999;
+    background-color: qlineargradient( x1:1 y1:1, x2:0 y2:0, stop:0 #182644, stop:1 #355494);
+}
+#menu #highrisk {
+    font-weight: bold;
+    color: red;
+}
+#menu QPushButton {
+    border: none;
+    border-radius: 3px;
+    color: #999999;
+    background-color: qlineargradient( x1:1 y1:1, x2:0 y2:0, stop:0 #355494, stop:1 transparent);
+}
+QPushButton:hover, #menu QPushButton:hover {
+    background-color: #355494;
+}
+
+QPushButton:pressed, #menu QPushButton:pressed {
+    background-color: rgba(17, 17, 17, 0.6);
+}
+QGridLayout {
+    background: transparent;
+}
+QScrollArea {
+    background: transparent;
+}
+QScrollBar:vertical {
+    width: 5px;
+}
+QScrollBar::handle::vertical {
+    background: #56acee;
+    border-radius: 5px;
+    border: none;
+}
+QScrollBar::handle::vertical::pressed {
+    background: #315E80;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: #111A2E;
+}
+QMenu {
+    background-color: #182644;
+    border: 1px solid #475a85;
+    border-radius: 0;
+}
+QMenu::item:selected {
+    background-color: rgba(102, 102, 102, 0.6);
+}
+QMenu::item:pressed {
+    background-color: #111111;
+}
+QMenu::item {
+    color: #999999;
+}
+QMenu::item:disabled{
+    background: transparent;
+}
+QMenu::item:disabled:selected {
+    background: transparent;
+}
+#qLoad_menu {
+    background-color: #182644;
+    border: 1px solid #475a85;
+    border-radius: 0;
+}
+#qLoad_menu::item:selected {
+    background-color: rgba(102, 102, 102, 0.6);
+}
+#qLoad_menu::item:pressed {
+    background-color: #111111;
+}
+#qLoad_menu::item {
+    color: #999999;
+}
+#qLoad_menu::item:disabled {
+    margin: 3px;
+}
+#qLoad_menu::item:disabled:selected {
+    background-color: transparent;
+}
+#style_menu {
+    background-color: #182644;
+    border: 1px solid #475a85;
+    border-radius: 0;
+}
+#style_menu::item:selected {
+    background-color: rgba(102, 102, 102, 0.6);
+}
+#style_menu::item:pressed {
+    background-color: #111111;
+}
+#style_menu::item {
+    color: #999999;
+}
+#style_menu::item:disabled {
+    margin: 3px;
+}
+#style_menu::item:disabled:selected {
+    background-color: transparent;
+}
+#style_menu::item:selected {
+    background-color: rgba(102, 102, 102, 0.6);
+}
+#style_menu::item:pressed {
+    background-color: #111111;
+}
+QLineEdit {
+    background-color: transparent;
+    border: 1px solid #475a85;
+    border-top: none;
+    border-left: none;
+    border-radius: 3px;
+    color: #999999;
+    height: 30px;
+    padding-left: 1px;
+}
+QLineEdit:focus {
+    border: 1px solid #475a85;
+    padding-left: 0;
+}
+QGroupBox {
+    color: #999999;
+    padding-top: 10px;
+    border: 1px solid #475a85;
+    border-radius: 5px;
+    border-bottom: none;
+    border-right: none;
+}
+QGroupBox::title {
+    color: #999999;
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px;
+    border: 1px solid #475a85;
+    border-top-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
