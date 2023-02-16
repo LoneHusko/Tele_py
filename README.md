@@ -5,7 +5,5 @@ Uses:
  - PySide2
  - win32clipboard (from module pywin32)
  - win10toast
- 
-**Still work in progress**
 
 More info at http://mirkiri.ml/projects/Tele-py/
