@@ -330,19 +330,17 @@ class Stickers(QMainWindow):
             clp.CloseClipboard()
         file_path = self.stickers[QPushButton.sender(self)]
         if os.path.exists(file_path):
-
-            clp.OpenClipboard()
-            clp.EmptyClipboard()
             config_object = ConfigParser()
             config_object.read("utils/config.ini")
             settings = config_object["SETTINGS"]
             if settings["copy_method"] == "dc":
+                clp.OpenClipboard()
+                clp.EmptyClipboard()
                 # This works for Discord, but not for Paint.NET:
                 wide_path = os.path.abspath(file_path).encode('utf-16-le') + b'\0'
                 clp.SetClipboardData(clp.RegisterClipboardFormat('FileNameW'), wide_path)
                 clp.CloseClipboard()
             elif settings["copy_method"] == "gimp":
-
                 image = Image.open(file_path)
 
                 output = BytesIO()
@@ -683,7 +681,7 @@ class Stickers(QMainWindow):
                 with open("utils/bottoken", "w") as token:
                     token.write(botToken.text())
                 try:
-                    asd = downloader.StickerDownloader(botToken.text())
+                    sticker_downloader = downloader.StickerDownloader(botToken.text())
 
                     name = stickerURL.text()
                     if not os.path.exists(f"downloads/{name}") and name != "":
@@ -695,13 +693,16 @@ class Stickers(QMainWindow):
 
 
                             print('=' * 60)
-                            _ = asd.get_sticker_set(name)
+                            pack = sticker_downloader.get_sticker_set(name)
 
                             print('-' * 60)
-                            _ = asd.download_sticker_set(_)
+                            sticker_downloader.download_sticker_set(pack)
                             if customName.text():
                                 with open(f"downloads/{name}/customname", "wt") as f:
                                     f.write(customName.text())
+                            else:
+                                with open(f"downloads/{name}/customname", "wt") as f:
+                                    f.write(pack["title"])
                             message.setObjectName("success")
                             message.setStyleSheet(styleSheet)
                             message.setText("Download completed!")
@@ -1174,7 +1175,7 @@ class Stickers(QMainWindow):
 
 if __name__ == '__main__':
     title = NAME+" "+VERSION+" Debug Console"
-    print(f"{title:_^70}")
+    print(f"{title:_^60}")
 
     print("Checking directory \"favourites\"...", end="")
     if not os.path.exists("utils/favourites"):
@@ -1216,7 +1217,7 @@ stylesheet = distant_horizon""")
 
     print("Launching application...")
     title = "Debug prints below:"
-    print(f"{title:_^70}")
+    print(f"{title:_^60}")
     del title
     app = QApplication(sys.argv)
     stickerWindow = Stickers()
