@@ -12,16 +12,13 @@ from utils import downloader
 from io import BytesIO
 from PIL import Image
 
-"""
-Uses PySide2, pywin32, winsound and modules.
-"""
-
-
-
+VERSION = "v1.4"
+FIRST = False
+NAME = "Tele-py"
 
 class Stickers(QMainWindow):
 
-    def __init__(self, parent= None):
+    def __init__(self):
         super(Stickers, self).__init__()
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon('utils/icon.png'))
@@ -29,13 +26,12 @@ class Stickers(QMainWindow):
 
         # Create a custom context menu for the tray icon
         self.tray_menu = QMenu(self)
-        self.tray_menu.addAction("Show Window", self.windowAppear)
-        self.tray_menu.addAction("Open settings", self.settingOpen)
-        self.tray_menu.addAction("Load favourites", self.loadFavourites)
+        self.tray_menu.addAction("Show Window", self.window_to_visible)
+        self.tray_menu.addAction("Load favourites", self.load_favourites)
         self.tray_menu.addSeparator()
         self.tray_menu.addAction("Quit", QApplication.quit)
         self.tray_icon.setContextMenu(self.tray_menu)
-        self.tray_icon.activated.connect(self.trayIconHandle)
+        self.tray_icon.activated.connect(self.tray_icon_handle)
 
         #Basic settings
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -49,7 +45,10 @@ class Stickers(QMainWindow):
         self.settings = []
         try:
             with open("utils/lastpack", "r") as pack:
-                self.path = pack.read()
+                path = pack.read()
+                print(os.path.exists(path))
+                if os.path.exists(path):
+                    self.path = path
         except:
             pass
         try:
@@ -72,10 +71,9 @@ class Stickers(QMainWindow):
         self.centralWidget.setObjectName("central_widget")
         self.setCentralWidget(self.centralWidget)
         self.widget = QWidget()
+
         #Layout of Container Widget
         self.layout = QGridLayout(self)
-
-
         self.widget.setLayout(self.layout)
 
         #Scroll Area Properties
@@ -84,20 +82,21 @@ class Stickers(QMainWindow):
         self.scroll.setWidget(self.widget)
         self.scroll.setStyleSheet("border: none;")
 
-
         self.vLayout = QVBoxLayout(self)
         hLayout = QHBoxLayout(self)
-
-
-
 
         self.message = QLabel()
         self.message.setFixedHeight(30)
         self.message.setFixedWidth(370)
         if self.path == "utils/favourites/":
-            self.animateMessage("Favourites", None, False)
+            self.animate_message("Favourites", None, False)
+        elif os.path.exists(self.path+"/customname"):
+            with open(self.path+"/customname") as f:
+                self.animate_message(f.read(), None, False)
+        elif self.path != "":
+            self.animate_message(self.path, "Path: ", False)
         else:
-            self.animateMessage(self.path, "Path: ", False)
+            self.animate_message(f"Tele-py {VERSION}")
         hLayout.addWidget(self.message)
 
         verticalSpacer = QSpacerItem(500, 0)
@@ -109,7 +108,7 @@ class Stickers(QMainWindow):
         self.loadStickersBtn.setIcon(QIcon(f"utils/{self.styleLocation}/loadStickers.png"))
         self.loadStickersBtn.setIconSize(size)
         self.loadStickersBtn.setToolTip("Menu")
-        self.loadStickersBtn.clicked.connect(lambda :self.selectStickers())
+        self.loadStickersBtn.clicked.connect(lambda :self.menu())
         self.loadStickersBtn.setObjectName("no_bg_btn")
         hLayout.addWidget(self.loadStickersBtn)
 
@@ -119,7 +118,7 @@ class Stickers(QMainWindow):
         self.settings.setIcon(QIcon(f"utils/{self.styleLocation}/settings.png"))
         self.settings.setToolTip("Settings")
         self.settings.setIconSize(size)
-        self.settings.clicked.connect(lambda :self.settingOpen())
+        self.settings.clicked.connect(lambda :self.settings_menu())
         self.settings.setObjectName("no_bg_btn")
         hLayout.addWidget(self.settings)
 
@@ -150,17 +149,28 @@ class Stickers(QMainWindow):
         self.closeBtn.setIcon(QIcon(f"utils/{self.styleLocation}/close.png"))
         self.closeBtn.setIconSize(size)
         self.closeBtn.setToolTip("Close")
-        self.closeBtn.clicked.connect(lambda :self.closeWindow())
+        self.closeBtn.clicked.connect(lambda :self.close_window())
         self.closeBtn.setObjectName("no_bg_btn")
         hLayout.addWidget(self.closeBtn)
+
         self.vLayout.addWidget(self.scroll)
         self.centralWidget.setLayout(self.vLayout)
-
-        version = QLabel("v1.4pre.0", parent=self)
-        version.setObjectName("version")
-        version.move(5, 460)
-        version.setAttribute(Qt.WA_TransparentForMouseEvents)
-        version.show()
+    def progressbar(self):
+        self.message.setObjectName("")
+        try:
+            with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
+                self.message.setStyleSheet(str(style.read()))
+                styleSheet = style
+        except FileNotFoundError:
+            pass
+        self.message.setText("Loading, please wait")
+        self.bar = QProgressBar(parent=self)
+        self.bar.setMinimum(0)
+        self.bar.setMaximum(100)
+        self.bar.setFixedHeight(30)
+        self.bar.setFixedWidth(300)
+        self.bar.move(100, 461)
+        self.bar.show()
     def notify(self, text = "Test message", isError = False, timeout = 1):
         notification = QLabel(text, parent=self)
         notification.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -187,14 +197,17 @@ class Stickers(QMainWindow):
         x = threading.Thread(target=thread)
         x.start()
 
-    def animateMessage(self, text, unanimated, isError):
+    def animate_message(self, text, unanimated = None, isError = False):
         if isError:
             self.message.setObjectName("error")
         else:
             self.message.setObjectName("")
-        with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
-            self.message.setStyleSheet(str(style.read()))
-            styleSheet = style
+        try:
+            with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
+                self.message.setStyleSheet(str(style.read()))
+                styleSheet = style
+        except:
+            pass
         def thread():
             if unanimated == None:
                 prefix = ""
@@ -208,14 +221,14 @@ class Stickers(QMainWindow):
                 time.sleep(0.03)
         x = threading.Thread(target=thread)
         x.start()
-    def windowAppear(self):
+    def window_to_visible(self):
         if not self.visible:
             flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint)
             self.setWindowFlags(flags)
             self.setVisible(True)
             self.visible = True
 
-    def trayIconHandle(self, reason):
+    def tray_icon_handle(self, reason):
         if reason == QSystemTrayIcon.Trigger and not self.visible:
             flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint)
             self.setWindowFlags(flags)
@@ -228,11 +241,10 @@ class Stickers(QMainWindow):
         def close():
             self.loadStickersBtn.setVisible(True)
             self.settings.setVisible(True)
-            self.closeBtn.clicked.connect(self.closeWindow)
+            self.closeBtn.clicked.connect(self.close_window)
             self.scroll.setVisible(True)
             self.widget.setVisible(True)
-            self.Blur.setBlurRadius(0)
-            self.scroll.setGraphicsEffect(self.Blur)
+            self.blur.setBlurRadius(0)
             widget.hide()
         dlayout = QVBoxLayout()
         dlayout.setAlignment(Qt.AlignCenter)
@@ -240,7 +252,6 @@ class Stickers(QMainWindow):
         blur_effect = QGraphicsBlurEffect(blurRadius=5)
         self.widget.setGraphicsEffect(blur_effect)
         widget.setObjectName("preview")
-        # self.vLayout.addWidget(widget)
         widget.setLayout(dlayout)
         widget.setContextMenuPolicy(Qt.CustomContextMenu)
         widget.customContextMenuRequested.connect(close)
@@ -262,25 +273,25 @@ class Stickers(QMainWindow):
         size = QSize(350,350)
         button.setIconSize(size)
         self.stickers[button] = self.stickers[QPushButton.sender(self)]
-        button.clicked.connect(self.stickerCopy)
+        button.clicked.connect(self.copy_sticker)
         sticker_location = self.stickers[QPushButton.sender(self)]
         original = rf'{sticker_location}'
         file_name = original.split("/")[-1]
-        def copyToFav():
+        def favourite():
             try:
                 target = r'utils/favourites/'+file_name
                 shutil.copyfile(original, target)
                 favButton.setText("Remove from favourites")
                 self.notify(text="Saved to favourites!")
-                favButton.clicked.connect(removeFromFav)
+                favButton.clicked.connect(unfavourite)
             except:
                 pass
-        def removeFromFav():
+        def unfavourite():
             if os.path.exists("utils/favourites/"+file_name):
                 os.remove("utils/favourites/"+file_name)
                 favButton.setText("Save to favourites")
                 self.notify(text="Removed from favourites!")
-                favButton.clicked.connect(copyToFav)
+                favButton.clicked.connect(favourite)
 
 
         dlayout.addWidget(button)
@@ -288,10 +299,10 @@ class Stickers(QMainWindow):
         dlayout.addLayout(hLayout)
         if os.path.exists("utils/favourites/"+file_name):
             favButton = QPushButton("Remove from favourites")
-            favButton.clicked.connect(removeFromFav)
+            favButton.clicked.connect(unfavourite)
         else:
             favButton = QPushButton("Save to favourites")
-            favButton.clicked.connect(copyToFav)
+            favButton.clicked.connect(favourite)
         favButton.setFixedHeight(30)
         hLayout.addWidget(favButton)
 
@@ -304,15 +315,14 @@ class Stickers(QMainWindow):
             self.closeBtn.clicked.connect(close)
             widget.setFixedSize(self.scroll.size())
             widget.move(self.scroll.pos())
-            self.Blur = QGraphicsBlurEffect()
-            self.Blur.setBlurRadius(10)
-            self.scroll.setGraphicsEffect(self.Blur)
-            # self.widget.setVisible(False)
-            # self.scroll.setVisible(False)
+            self.blur = QGraphicsBlurEffect()
+            self.blur.setBlurRadius(10)
+            self.scroll.setGraphicsEffect(self.blur)
             widget.show()
         else:
-            self.dropError(f"File not found! ({sticker_location})")
-    def stickerCopy(self):
+            self.unload_stickers()
+            self.drop_error(f"File not found! ({sticker_location})")
+    def copy_sticker(self):
         def send_to_clipboard(clip_type, data):
             clp.OpenClipboard()
             clp.EmptyClipboard()
@@ -332,16 +342,6 @@ class Stickers(QMainWindow):
                 clp.SetClipboardData(clp.RegisterClipboardFormat('FileNameW'), wide_path)
                 clp.CloseClipboard()
             elif settings["copy_method"] == "gimp":
-                # clipboard = app.clipboard()
-                #
-                # image = QImage(file_path)
-                # pixmap = QPixmap.fromImage(image)
-                # clipboard.setPixmap(pixmap)
-
-
-                # file = open(file_path, 'rb')
-                # clp.SetClipboardData(clp.RegisterClipboardFormat('image/png'), file.read())
-                # clp.CloseClipboard()
 
                 image = Image.open(file_path)
 
@@ -359,9 +359,10 @@ class Stickers(QMainWindow):
 
             self.notify("Sticker copied!")
         else:
-            self.dropError(f"File not found! ({file_path})")
+            self.unload_stickers()
+            self.drop_error(f"File not found! ({file_path})")
 
-    def closeWindow(self):
+    def close_window(self):
         config_object = ConfigParser()
         config_object.read("utils/config.ini")
         hides = config_object["SETTINGS"]
@@ -370,13 +371,13 @@ class Stickers(QMainWindow):
         else:
             self.setVisible(False)
             self.visible = False
-    def changeStyle(self):
+    def change_style(self):
         self.location = self.stylesheets[QPushButton.sender(self)]
 
         with open(f"utils/stylesheet/{self.location}/customname", "r") as f:
             self.settingsMessage.setText(f"Press 'Apply stylesheet' to apply theme '{f.read()}'")
 
-    def settingOpen(self):
+    def settings_menu(self):
         def close():
             dlg.setVisible(False)
             self.saveBtn.setVisible(False)
@@ -384,7 +385,7 @@ class Stickers(QMainWindow):
             self.loadStickersBtn.setVisible(True)
             self.settings.setVisible(True)
             self.closeBtn.clicked.disconnect()
-            self.closeBtn.clicked.connect(self.closeWindow)
+            self.closeBtn.clicked.connect(self.close_window)
         dlg = QWidget()
         dlg.setContextMenuPolicy(Qt.CustomContextMenu)
         dlg.customContextMenuRequested.connect(close)
@@ -392,14 +393,14 @@ class Stickers(QMainWindow):
         dlg.setObjectName("menu")
         dlg.setLayout(dlayout)
         dlayout.setAlignment(Qt.AlignCenter)
-        def applySyle():
+        def apply_syle():
             try:
-                with open(f"utils/{self.styleLocation}/style_settings.css", "r") as style:
-                    dlg.setStyleSheet(str(style.read()))
+                with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
+                    self.setStyleSheet(str(style.read()))
             except:
                 pass
 
-        def dcCopy():
+        def dc_copy():
             if not dcComp.objectName() == "activeBtn":
                 config_object = ConfigParser()
                 config_object.read("utils/config.ini")
@@ -410,8 +411,8 @@ class Stickers(QMainWindow):
                     config_object.write(conf)
                 dcComp.setObjectName("activeBtn")
                 gimpComp.setObjectName("")
-                applySyle()
-        def gimpCopy():
+                apply_syle()
+        def gimp_copy():
             if not gimpComp.objectName() == "activeBtn":
                 config_object = ConfigParser()
                 config_object.read("utils/config.ini")
@@ -422,8 +423,8 @@ class Stickers(QMainWindow):
                     config_object.write(conf)
                 gimpComp.setObjectName("activeBtn")
                 dcComp.setObjectName("")
-                applySyle()
-        def closesWindow():
+                apply_syle()
+        def closes_window():
             hideWindowBtn.setObjectName("")
             closeWindowBtn.setObjectName("activeBtn")
             #Read config.ini file
@@ -437,8 +438,8 @@ class Stickers(QMainWindow):
             #Write changes back to file
             with open('utils/config.ini', 'w') as conf:
                 config_object.write(conf)
-            applySyle()
-        def hidesWindow():
+            apply_syle()
+        def hides_window():
             hideWindowBtn.setObjectName("activeBtn")
             closeWindowBtn.setObjectName("")
             #Read config.ini file
@@ -452,7 +453,7 @@ class Stickers(QMainWindow):
             #Write changes back to file
             with open('utils/config.ini', 'w') as conf:
                 config_object.write(conf)
-            applySyle()
+            apply_syle()
         def save():
             if maxFileIn.text():
                 #Read config.ini file
@@ -479,7 +480,7 @@ class Stickers(QMainWindow):
                 with open('utils/config.ini', 'w') as conf:
                     config_object.write(conf)
             close()
-        def addStyle():
+        def add_style():
             config_object = ConfigParser()
             config_object.read("utils/config.ini")
             settings = config_object["SETTINGS"]
@@ -505,12 +506,11 @@ class Stickers(QMainWindow):
         config_object = ConfigParser()
         config_object.read("utils/config.ini")
         settings = config_object["SETTINGS"]
-        #Build dialog window
-        applySyle()
+
         applyStyleBtn = QPushButton("Apply stylesheet")
         applyStyleBtn.setFixedWidth(300)
         applyStyleBtn.setFixedHeight(30)
-        applyStyleBtn.clicked.connect(addStyle)
+        applyStyleBtn.clicked.connect(add_style)
         styleListBtn = QPushButton("Select stylesheet")
         menu = QMenu()
         menu.setObjectName("style_menu")
@@ -531,20 +531,22 @@ class Stickers(QMainWindow):
                     try:
                         with open(f"utils/stylesheet/{i}/customname") as f:
                             if active:
-                                name = f.read()+" (Active)"
+                                name = "["+f.read()+"]"
                             else:
                                 name = f.read()
                     except:
                         if active:
-                            name = i+" (Active)"
+                            name = "["+i+"]"
                         else:
                             name = i
                     action = QAction(name)
                     self.stylesheets[action] = i
-                    action.triggered.connect(self.changeStyle)
+                    action.triggered.connect(self.change_style)
                     elements.append(action)
                 for i in elements:
                     menu.addAction(i)
+            else:
+                menu.addAction("No stylesheets found").setEnabled(False)
         else:
             menu.addAction("No stylesheets found").setEnabled(False)
 
@@ -582,10 +584,10 @@ class Stickers(QMainWindow):
         hidesGroup.setLayout(hidesLayout)
         hideWindowBtn = QPushButton("Hide window")
         hideWindowBtn.setFixedHeight(30)
-        hideWindowBtn.clicked.connect(hidesWindow)
+        hideWindowBtn.clicked.connect(hides_window)
         closeWindowBtn = QPushButton("Close application")
         closeWindowBtn.setFixedHeight(30)
-        closeWindowBtn.clicked.connect(closesWindow)
+        closeWindowBtn.clicked.connect(closes_window)
         hidesLayout.addWidget(hideWindowBtn)
         hidesLayout.addWidget(closeWindowBtn)
 
@@ -595,11 +597,11 @@ class Stickers(QMainWindow):
             closeWindowBtn.setObjectName("activeBtn")
 
         dcComp = QPushButton("Discord")
-        dcComp.clicked.connect(dcCopy)
+        dcComp.clicked.connect(dc_copy)
         dcComp.setFixedWidth(129)
         dcComp.setFixedHeight(30)
         gimpComp = QPushButton("Gimp")
-        gimpComp.clicked.connect(gimpCopy)
+        gimpComp.clicked.connect(gimp_copy)
         gimpComp.setFixedWidth(129)
         gimpComp.setFixedHeight(30)
 
@@ -644,21 +646,21 @@ class Stickers(QMainWindow):
         self.closeBtn.clicked.disconnect()
         self.closeBtn.clicked.connect(close)
 
-    def checkStickers(self):
+    def check_stickers(self):
         if len(self.path) and not self.stickersLoaded:
-            self.loadStickers()
+            self.load_stickers()
         else:
             if self.stickersLoaded:
-                self.unloadStickers()
-                self.loadStickers()
+                self.unload_stickers()
+                self.load_stickers()
 
-    def loadFavourites(self):
+    def load_favourites(self):
         self.path = "utils/favourites/"
-        self.unloadStickers()
-        self.loadStickers()
+        self.unload_stickers()
+        self.load_stickers()
 
 
-    def downloadSticker(self):
+    def download_stickers(self):
         self.stickerDlg.setVisible(False)
         self.backBtn.setVisible(True)
         def close():
@@ -669,11 +671,11 @@ class Stickers(QMainWindow):
             self.loadStickersBtn.setVisible(True)
             self.scroll.setVisible(True)
             self.closeBtn.clicked.disconnect()
-            self.closeBtn.clicked.connect(self.closeWindow)
+            self.closeBtn.clicked.connect(self.close_window)
         def back():
             dlg.setVisible(False)
             self.backBtn.setVisible(False)
-            self.selectStickers()
+            self.menu()
 
         def download():
             def thread():
@@ -686,6 +688,9 @@ class Stickers(QMainWindow):
                     name = stickerURL.text()
                     if not os.path.exists(f"downloads/{name}") and name != "":
                         if name != "":
+                            message.setObjectName("")
+                            message.setStyleSheet(styleSheet)
+                            message.setText("Downloading, please wait...")
                             name = (name.split('/')[-1])
 
 
@@ -700,35 +705,31 @@ class Stickers(QMainWindow):
                             message.setObjectName("success")
                             message.setStyleSheet(styleSheet)
                             message.setText("Download completed!")
-                            winsound.PlaySound("utils/success.wav", winsound.SND_FILENAME)
+                            winsound.PlaySound("utils/success.wav", winsound.SND_ASYNC)
                         else:
                             message.setObjectName("error")
                             message.setStyleSheet(styleSheet)
                             message.setText("Invalid URL!")
-                            winsound.PlaySound("utils/error.wav", winsound.SND_FILENAME)
+                            winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
                     elif name == "":
                         message.setObjectName("error")
                         message.setStyleSheet(styleSheet)
                         message.setText("Invalid URL!")
-                        winsound.PlaySound("utils/error.wav", winsound.SND_FILENAME)
+                        winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
 
                     elif os.path.exists(f"downloads/{name}"):
                         message.setObjectName("error")
                         message.setStyleSheet(styleSheet)
                         message.setText("Stickers already downloaded!")
-                        winsound.PlaySound("utils/error.wav", winsound.SND_FILENAME)
+                        winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
 
                 except:
                     message.setObjectName("error")
                     message.setStyleSheet(styleSheet)
                     message.setText("Download failed! Please check the token and the URL!")
-                    winsound.PlaySound("utils/error.wav", winsound.SND_FILENAME)
-
+                    winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
 
             x = threading.Thread(target=thread)
-            message.setObjectName("")
-            message.setStyleSheet(styleSheet)
-            message.setText("Downloading, please wait...")
 
             x.start()
 
@@ -752,11 +753,12 @@ class Stickers(QMainWindow):
         message.setAlignment(Qt.AlignCenter)
         botToken = QLineEdit()
         botToken.setFixedWidth(300)
+        botToken.setEchoMode(QLineEdit.Password)
         botToken.setPlaceholderText("Token")
         try:
             with open("utils/bottoken", "r") as token:
                 _ = token.read()
-                botToken.setText(_)
+                botToken.setText(_.strip())
         except:
             pass
 
@@ -791,16 +793,16 @@ class Stickers(QMainWindow):
         self.closeBtn.clicked.connect(close)
 
 
-    def quickLoadPrepare(self):
+    def quick_load_prepare(self):
         self.path = self.loadPath[QPushButton.sender(self)]
         try:
             with open("utils/lastpack", "w") as pack:
                 pack.write(self.path)
         except:
             pass
-        self.unloadStickers()
-        self.loadStickers()
-    def quickLoad(self):
+        self.unload_stickers()
+        self.load_stickers()
+    def quick_load_dropdown(self):
         added = 0
         def close():
             self.scroll.setVisible(True)
@@ -809,7 +811,7 @@ class Stickers(QMainWindow):
             self.settings.setVisible(True)
             self.loadStickersBtn.setVisible(True)
             self.closeBtn.clicked.disconnect()
-            self.closeBtn.clicked.connect(self.closeWindow)
+            self.closeBtn.clicked.connect(self.close_window)
         self.loadPath = {}
         menu = QMenu()
         try:
@@ -832,18 +834,20 @@ class Stickers(QMainWindow):
                         name = i
                     action = QAction(name)
                     action.setIcon(QIcon(fr"downloads/{i}/{icon}"))
-                    action.triggered.connect(self.quickLoadPrepare)
+                    action.triggered.connect(self.quick_load_prepare)
                     action.triggered.connect(menu.close)
                     action.triggered.connect(close)
                     self.loadPath[action] = f"downloads/{i}/"
                     menu.addAction(action)
                     added += 1
+            else:
+                menu.addAction("No downloads found").setEnabled(False)
 
         else:
             menu.addAction("No downloads found").setEnabled(False)
         return menu
 
-    def editDropdown(self):
+    def manage_stickers_dropdown(self):
         menu = QMenu()
         self.packs = {}
         try:
@@ -867,15 +871,16 @@ class Stickers(QMainWindow):
                     action = QAction(name)
                     action.setIcon(QIcon(fr"downloads/{i}/{icon}"))
                     action.triggered.connect(menu.close)
-                    action.triggered.connect(self.editStickers)
+                    action.triggered.connect(self.manage_stickers)
                     self.packs[action] = f"downloads/{i}/"
                     menu.addAction(action)
-
+            else:
+                menu.addAction("No downloads found").setEnabled(False)
         else:
             menu.addAction("No downloads found").setEnabled(False)
         return menu
 
-    def selectStickers(self):
+    def menu(self):
         def close():
             self.scroll.setVisible(True)
             self.stickerDlg.setVisible(False)
@@ -883,7 +888,7 @@ class Stickers(QMainWindow):
             self.settings.setVisible(True)
             self.loadStickersBtn.setVisible(True)
             self.closeBtn.clicked.disconnect()
-            self.closeBtn.clicked.connect(self.closeWindow)
+            self.closeBtn.clicked.connect(self.close_window)
         self.stickerDlg = QWidget()
         self.stickerDlg.setObjectName("menu")
         self.stickerDlg.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -893,38 +898,38 @@ class Stickers(QMainWindow):
         dlayout.setAlignment(Qt.AlignCenter)
 
         qLoad = QPushButton("Quick Load")
-        dropdown = self.quickLoad()
+        dropdown = self.quick_load_dropdown()
         qLoad.setMenu(dropdown)
         qLoad.menu() # For some reason it only sets the menu if this line is here.
         qLoad.setToolTip("Load downloaded stickers quickly")
 
         browseButton = QPushButton("Browse Stickers")
-        browseButton.clicked.connect(self.setStickerPath)
+        browseButton.clicked.connect(self.set_sticker_path)
         browseButton.setToolTip("Browse folders and load stickers from them")
 
         setButton = QPushButton("Load Stickers")
-        setButton.clicked.connect(self.checkStickers)
+        setButton.clicked.connect(self.check_stickers)
         setButton.clicked.connect(close)
         setButton.setToolTip("Load the stickers to the interface")
 
         self.favButton = QPushButton("Load Favourites")
-        self.favButton.clicked.connect(self.loadFavourites)
+        self.favButton.clicked.connect(self.load_favourites)
         self.favButton.clicked.connect(close)
         self.favButton.setToolTip("Load stickers that you previously saved to your favourites")
 
         clearButton = QPushButton("Unload Stickers")
-        clearButton.clicked.connect(self.unloadStickers)
+        clearButton.clicked.connect(self.unload_stickers)
         clearButton.setToolTip("Unload the stickers from the interface")
 
         editButton = QPushButton("Manage stickerpacks")
-        dropdown = self.editDropdown()
+        dropdown = self.manage_stickers_dropdown()
         editButton.setMenu(dropdown)
         editButton.menu()
         editButton.setToolTip("Manage downloaded stickerpacks")
 
         downloadButton = QPushButton("Download Stickers")
         downloadButton.setToolTip("Download stickers from Telegram")
-        downloadButton.clicked.connect(self.downloadSticker)
+        downloadButton.clicked.connect(self.download_stickers)
 
         qLoad.setFixedWidth(300)
         qLoad.setFixedHeight(30)
@@ -964,26 +969,30 @@ class Stickers(QMainWindow):
         self.widget.setVisible(False)
         self.closeBtn.clicked.disconnect()
         self.closeBtn.clicked.connect(close)
-    def editStickers(self):
+    def manage_stickers(self):
         self.stickerDlg.setVisible(False)
-        def deleteRestore():
+        def delete_restore():
             deleteButton.clicked.disconnect()
             deleteButton.setText("Delete")
-            deleteButton.clicked.connect(deleteQuestion)
+            deleteButton.clicked.connect(delete_question)
         def delete():
             removable = path.split("/")[0]+"/"+path.split("/")[-2]
             shutil.rmtree(removable)
-            time.sleep(0.01)
+            self.notify(text="Pack deleted!")
             back()
-        def deleteQuestion():
+        def delete_question():
             deleteButton.setText("Click again to confirm")
             deleteButton.clicked.connect(delete)
             deleteButton.setContextMenuPolicy(Qt.CustomContextMenu)
-            deleteButton.customContextMenuRequested.connect(deleteRestore)
+            deleteButton.customContextMenuRequested.connect(delete_restore)
         def rename():
-            with open(path+"customname", "w") as f:
-                f.write(name.text())
-            back()
+            if name.text():
+                with open(path+"customname", "w") as f:
+                    f.write(name.text())
+                self.notify(text="Pack renamed!")
+                back()
+            else:
+                self.drop_error("Cannot set name!")
         def close():
             widget.setVisible(False)
             self.backBtn.setVisible(False)
@@ -992,11 +1001,11 @@ class Stickers(QMainWindow):
             self.loadStickersBtn.setVisible(True)
             self.scroll.setVisible(True)
             self.closeBtn.clicked.disconnect()
-            self.closeBtn.clicked.connect(self.closeWindow)
+            self.closeBtn.clicked.connect(self.close_window)
         def back():
             widget.setVisible(False)
             self.backBtn.setVisible(False)
-            self.selectStickers()
+            self.menu()
         path = self.packs[QPushButton.sender(self)]
         widget = QWidget()
         widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1024,7 +1033,7 @@ class Stickers(QMainWindow):
         renameButton.clicked.connect(rename)
         deleteButton = QPushButton("Delete")
         deleteButton.setFixedHeight(30)
-        deleteButton.clicked.connect(lambda :deleteQuestion())
+        deleteButton.clicked.connect(lambda :delete_question())
         deleteButton.setObjectName("highrisk")
 
         dlayout.addWidget(label)
@@ -1041,26 +1050,18 @@ class Stickers(QMainWindow):
         self.closeBtn.clicked.disconnect()
         self.closeBtn.clicked.connect(close)
 
-    def setStickerPath(self):
+    def set_sticker_path(self):
         self.path = QFileDialog.getExistingDirectory(self, "Select Sticker Folder")
         if len(self.path):
-            conf = ConfigParser()
-            conf.read("utils/conf.ini")
-            max = conf["SETTINGS"]
-            if len([f for f in listdir(self.path) if isfile(join(self.path, f))]) <= int(max["max_stickers_loadable"]):
-                try:
-                    self.message.setText(f"Path: {self.path}")
-                except:
-                    pass
+            self.message.setText(f"Path: {self.path}")
 
-            else:
-                self.dropError(f"Too many stickers! The limit is {max['max_stickers_loadable']}.")
-
-    def loadStickers(self):
+    def load_stickers(self):
+        self.progressbar()
         error = False
         if os.path.exists(self.path):
             br = False
             onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f)) if f.split(".")[-1].lower() == "jpg" or f.split(".")[-1].lower() == "png" or f.split(".")[-1].lower() == "webp"]
+            bar_value = 0
             if not self.stickersLoaded and len(self.path):
                 config_object = ConfigParser()
                 config_object.read("utils/config.ini")
@@ -1072,20 +1073,25 @@ class Stickers(QMainWindow):
                 file = 0
                 button_list = []
                 self.stickers = {}
+                conf = ConfigParser()
+                conf.read("utils/config.ini")
+                max = conf["SETTINGS"]
+                if not len(onlyfiles) > int(max["max_stickers_loadable"]):
+                    segment = 100/len(onlyfiles)
+                else:
+                    segment = 100/int(max["max_stickers_loadable"])
                 for i in range(len(onlyfiles)):
-                    conf = ConfigParser()
-                    conf.read("utils/config.ini")
-                    max = conf["SETTINGS"]
-                    if len(onlyfiles) > int(max["max_stickers_loadable"]):
+                    if file > int(max["max_stickers_loadable"]):
                         br = True
-                        error = True
-                        self.dropError(f"Too many stickers! The limit is {max['max_stickers_loadable']}.")
-                        onlyfiles = []
                         break
                     if br:
                         break
                     for x in range(columns):
-
+                        if file+1 > int(max["max_stickers_loadable"]):
+                            br = True
+                            break
+                        bar_value += segment
+                        self.bar.setValue(bar_value)
                         button = QPushButton()
                         try:
                             icon = self.path+onlyfiles[file]
@@ -1098,7 +1104,7 @@ class Stickers(QMainWindow):
                             button.setIconSize(size)
                             button_list.append(button)
                             self.layout.addWidget(button, i, x)
-                            button.clicked.connect(self.stickerCopy)
+                            button.clicked.connect(self.copy_sticker)
                             button.setContextMenuPolicy(Qt.CustomContextMenu)
                             button.customContextMenuRequested.connect(self.preview)
                             file += 1
@@ -1114,23 +1120,28 @@ class Stickers(QMainWindow):
                 except:
                     pass
                 self.stickersLoaded = True
+                self.bar.hide()
                 if not error:
                     if self.message.text() != "Favourites" and self.path == "utils/favourites/":
-                        self.animateMessage("Favourites", None, False)
+                        self.animate_message("Favourites", None, False)
+                    elif os.path.exists(self.path+"/customname"):
+                        with open(self.path+"/customname") as f:
+                            self.animate_message(f.read(), None, False)
                     elif self.message.text() != "Favourites" and self.path != "utils/favourites/":
-                        self.animateMessage(self.path, "Path: ", False)
+                        self.animate_message(self.path, "Path: ", False)
                     elif self.message.text() == "Favourites" and self.path != "utils/favourites/":
-                        self.animateMessage("Path: "+self.path, None, False)
+                        self.animate_message("Path: " + self.path, None, False)
                     elif self.message.text() == "Favourites" and self.path == "utils/favourites/":
                         pass
         else:
-            self.dropError(f"The given path does not exist! ({self.path})")
+            with open("utils/lastpack", "w") as file:
+                file.write("")
+            self.bar.hide()
+            self.drop_error(f"The given path does not exist! ({self.path})")
+            self.path = ""
 
 
-
-
-
-    def unloadStickers(self):
+    def unload_stickers(self):
         children = []
         for i in range(self.layout.count()):
             child = self.layout.itemAt(i).widget()
@@ -1140,82 +1151,15 @@ class Stickers(QMainWindow):
             child.deleteLater()
         self.stickersLoaded = False
 
-    def dropError(self, message):
-        # C:\Windows\Media\Windows Notify Email.wav
-        # "C:\Windows\Media\Windows Notify Calendar.wav
+    def drop_error(self, message):
         def playsound():
-            winsound.PlaySound("utils/error.wav", winsound.SND_FILENAME)
+            winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
         def thread():
-            self.animateMessage(message, None, True)
+            self.animate_message(message, None, True)
         x = threading.Thread(target=playsound)
         y = threading.Thread(target=thread)
         y.start()
         x.start()
-
-        # msgBox = QMessageBox(self)
-        # # Create a QPixmap object with the desired image file
-        # icon_path = "utils/warning.png"
-        # icon = QPixmap(icon_path)
-        #
-        # # Resize the QPixmap object
-        #
-        # # Set the icon for the QMessageBox
-        # msgBox.setIconPixmap(icon)
-        #
-        # msgBox.setWindowTitle("Error")
-        # msgBox.setText(message)
-        #
-        #
-        # msgBox.show()
-
-
-
-    def dropInfo(self, message):
-        def playsound():
-            winsound.PlaySound("C:\Windows\Media\Windows Message Nudge.wav", winsound.SND_FILENAME)
-        x = threading.Thread(target=playsound)
-        x.start()
-        msgBox = QMessageBox(self)
-        # Create a QPixmap object with the desired image file
-        icon_path = "utils/info.png"
-        icon = QPixmap(icon_path)
-
-        # Resize the QPixmap object
-        icon = icon.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        # Set the icon for the QMessageBox
-        msgBox.setIconPixmap(icon)
-        msgBox.setWindowTitle("Information")
-        msgBox.setText(message)
-        msgBox.setStyleSheet("""
-            QLabel{
-                border: none;
-                background-color: rgba(102, 102, 102, 0.25);
-                border-radius: 3px;
-                height: 30px !important;
-                color: #999999;
-                padding: 5px;
-            }
-
-            QPushButton {
-                border: none;
-                background-color: rgba(102, 102, 102, 0.25);
-                border-radius: 3px;
-                width: 50px;
-                height: 30px;
-                color: #999999;
-            }
-
-            QPushButton:hover {
-                background-color: #666666;
-            }
-
-            QPushButton:pressed {
-                background-color: #111111;
-            }
-        """)
-
-        msgBox.show()
 
     # action #1
     def mousePressEvent(self, event):
@@ -1229,14 +1173,51 @@ class Stickers(QMainWindow):
             self.oldPosition = event.globalPos()
 
 if __name__ == '__main__':
+    title = NAME+" "+VERSION+" Debug Console"
+    print(f"{title:_^70}")
+
+    print("Checking directory \"favourites\"...", end="")
     if not os.path.exists("utils/favourites"):
+        print("Not found!")
+        print("Making directory \"favourites\"...", end="")
         os.mkdir("utils/favourites")
+        FIRST = True
+    print("Done!")
+
+    print("Checking file \"lastpack\"...", end="")
     if not os.path.exists("utils/lastpack"):
+        print("Not found!")
+        print("Creating file \"lastpack\"...", end="")
         with open("utils/lastpack", "a") as _:
-            pass
+            FIRST = True
+    print("Done!")
+
+    print("Checking file \"bottoken\"...", end="")
     if not os.path.exists("utils/bottoken"):
+        print("Not found!")
+        print("Creating file \"bottoken\"...", end="")
         with open("utils/bottoken", "a") as _:
-            pass
+            FIRST = True
+    print("Done!")
+
+    print("Checking config file...", end="")
+    if not os.path.exists("utils/config.ini"):
+        print("Not found!")
+        print("Creating config file...", end="")
+        with open("utils/config.ini", "a") as _:
+            FIRST = True
+            _.write("""[SETTINGS]
+max_stickers_loadable = 120
+copy_method = dc
+columns = 4
+hides = 0
+stylesheet = distant_horizon""")
+    print("Done!")
+
+    print("Launching application...")
+    title = "Debug prints below:"
+    print(f"{title:_^70}")
+    del title
     app = QApplication(sys.argv)
     stickerWindow = Stickers()
     stickerWindow.show()
