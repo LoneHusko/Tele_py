@@ -5,8 +5,6 @@ from subprocess import check_output
 from concurrent.futures import as_completed, ThreadPoolExecutor
 import time
 import os
-import string
-import random
 
 
 
@@ -19,11 +17,8 @@ def assure_folder_exists(folder, root):
     return full_path
 
 
-def random_filename(length, ext):
-    return ''.join([random.choice(string.ascii_lowercase) for _ in range(length)]) + '.{}'.format(ext)
 
 
-# TODO: Replace with a named tuple
 class File:
     def __init__(self, name, link):
         self.name = name
@@ -67,9 +62,10 @@ class StickerDownloader:
 
     def get_file(self, file_id):
         info = self._api_request('getFile', {'file_id': file_id})
-        f = File(name=info['result']['file_path'].split('/')[-1],
+        file_path = info['result']['file_path'].split('/')
+        file_name = '{}-{}.{}'.format(file_path[-2], file_path[-1].split('.')[0], file_path[-1].split('.')[1])
+        f = File(name=file_name,
                  link='https://api.telegram.org/file/bot{}/{}'.format(self.token, info['result']['file_path']))
-
         return f
 
     def get_sticker_set(self, name):
@@ -107,7 +103,6 @@ class StickerDownloader:
         with open(file_path, 'wb') as f:
             res = self.session.get(link)
             f.write(res.content)
-
         return file_path
 
     def download_sticker_set(self, sticker_set):
@@ -118,7 +113,7 @@ class StickerDownloader:
         print('Starting download of "{}" into {}'.format(sticker_set['name'], download_path))
         start = time.time()
         with ThreadPoolExecutor(max_workers=self.THREADS) as executor:
-            futures = [executor.submit(self.download_file, f.name, f.link, download_path) for f in sticker_set['files']]
+            futures = [executor.submit(self.download_file, f"{sticker_set['name']}-{i+1}.{f.name.split('.')[-1]}", f.link, download_path) for i, f in enumerate(sticker_set['files'])]
             for i in as_completed(futures):
                 downloads.append(i.result())
 
