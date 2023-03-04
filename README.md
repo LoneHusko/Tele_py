@@ -2,10 +2,10 @@
 Lets you send Telegram stickers on any chat platform.
 
 
-# How it works?
+## How it works?
 When you click on a sticker it gets copied to the system's clipboard. You can then paste it into any chat platform.
 
-# Tested chat platforms
+## Tested chat platforms
  - Discord
  - Facebook Messenger
  - Google Chat (With some issues)
