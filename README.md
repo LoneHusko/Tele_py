@@ -7,4 +7,5 @@ Uses:
  - win10toast
 
 More info at http://mirkiri.ml/projects/Tele-py/
+
 The downloader was made by [Cartmanishere](https://github.com/Cartmanishere), and can be found [here](https://github.com/Cartmanishere/telegram-sticker-downloader)
