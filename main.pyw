@@ -12,7 +12,7 @@ from modules import downloader
 from io import BytesIO
 from PIL import Image
 
-VERSION = "v1.4"
+VERSION = "unreleased"
 FIRST = False
 NAME = "Tele-py"
 
@@ -349,6 +349,11 @@ class Stickers(QMainWindow):
                 output.close()
 
                 send_to_clipboard(clp.CF_DIB, data)
+            elif settings["copy_method"] == "cc":
+                subprocess.run(["modules\clipcopy.exe", {file_path}], \
+                               stdout=subprocess.DEVNULL, \
+                               stderr=subprocess.DEVNULL, \
+                               shell=True)
 
 
             print(f"Button: {QPushButton.sender(self)}")
@@ -409,6 +414,7 @@ class Stickers(QMainWindow):
                     config_object.write(conf)
                 dcComp.setObjectName("activeBtn")
                 gimpComp.setObjectName("")
+                clipcopy.setObjectName("")
                 apply_syle()
         def gimp_copy():
             if not gimpComp.objectName() == "activeBtn":
@@ -421,6 +427,20 @@ class Stickers(QMainWindow):
                     config_object.write(conf)
                 gimpComp.setObjectName("activeBtn")
                 dcComp.setObjectName("")
+                clipcopy.setObjectName("")
+                apply_syle()
+        def cc_copy():
+            if not gimpComp.objectName() == "cc":
+                config_object = ConfigParser()
+                config_object.read("utils/config.ini")
+                settings = config_object["SETTINGS"]
+                settings["copy_method"] = "cc"
+
+                with open('utils/config.ini', 'w') as conf:
+                    config_object.write(conf)
+                gimpComp.setObjectName("")
+                dcComp.setObjectName("")
+                clipcopy.setObjectName("activeBtn")
                 apply_syle()
         def closes_window():
             hideWindowBtn.setObjectName("")
@@ -602,10 +622,16 @@ class Stickers(QMainWindow):
         gimpComp.clicked.connect(gimp_copy)
         gimpComp.setFixedHeight(30)
 
+        clipcopy = QPushButton("ClipCopy")
+        clipcopy.clicked.connect(cc_copy)
+        clipcopy.setFixedHeight(30)
+
         if settings["copy_method"] == "dc":
             dcComp.setObjectName("activeBtn")
         elif settings["copy_method"] == "gimp":
             gimpComp.setObjectName("activeBtn")
+        elif settings["copy_method"] == "cc":
+            clipcopy.setObjectName("activeBtn")
 
 
         dgrid = QGridLayout()
@@ -615,6 +641,7 @@ class Stickers(QMainWindow):
         compLayout = QGridLayout()
         compLayout.addWidget(dcComp, 0, 0)
         compLayout.addWidget(gimpComp, 0, 1)
+        compLayout.addWidget(clipcopy, 0, 2)
         groupComp.setLayout(compLayout)
 
         self.settingsMessage.setFixedWidth(300)
