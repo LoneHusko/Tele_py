@@ -1,4 +1,4 @@
-import sys, os, shutil, threading, winsound, time
+import sys, os, shutil, threading, winsound, time, subprocess
 
 from PySide2 import QtCore
 from PySide2.QtCore import *
@@ -8,7 +8,7 @@ from os.path import isfile, join
 from os import listdir
 import win32clipboard as clp
 from configparser import ConfigParser
-from utils import downloader
+from modules import downloader
 from io import BytesIO
 from PIL import Image
 
@@ -596,19 +596,16 @@ class Stickers(QMainWindow):
 
         dcComp = QPushButton("Discord")
         dcComp.clicked.connect(dc_copy)
-        dcComp.setFixedWidth(129)
         dcComp.setFixedHeight(30)
+
         gimpComp = QPushButton("Gimp")
         gimpComp.clicked.connect(gimp_copy)
-        gimpComp.setFixedWidth(129)
         gimpComp.setFixedHeight(30)
 
         if settings["copy_method"] == "dc":
             dcComp.setObjectName("activeBtn")
         elif settings["copy_method"] == "gimp":
             gimpComp.setObjectName("activeBtn")
-        flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint)
-        dlg.setWindowFlags(flags)
 
 
         dgrid = QGridLayout()
@@ -688,7 +685,7 @@ class Stickers(QMainWindow):
                         if name != "":
                             message.setObjectName("")
                             message.setStyleSheet(styleSheet)
-                            message.setText("Downloading, please wait...")
+                            message.setText("Getting pack info...")
                             name = (name.split('/')[-1])
 
 
@@ -696,6 +693,7 @@ class Stickers(QMainWindow):
                             pack = sticker_downloader.get_sticker_set(name)
 
                             print('-' * 60)
+                            message.setText("Downloading files...")
                             sticker_downloader.download_sticker_set(pack)
                             if customName.text():
                                 with open(f"downloads/{name}/customname", "wt") as f:
@@ -724,7 +722,8 @@ class Stickers(QMainWindow):
                         message.setText("Stickers already downloaded!")
                         winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
 
-                except:
+                except Exception as exception:
+                    print(exception)
                     message.setObjectName("error")
                     message.setStyleSheet(styleSheet)
                     message.setText("Download failed! Please check the token and the URL!")
@@ -894,7 +893,7 @@ class Stickers(QMainWindow):
         self.stickerDlg.setObjectName("menu")
         self.stickerDlg.setContextMenuPolicy(Qt.CustomContextMenu)
         self.stickerDlg.customContextMenuRequested.connect(close)
-        self.vLayout.addWidget(self.stickerDlg)
+        # self.vLayout.addWidget(self.stickerDlg)
         dlayout = QVBoxLayout()
         dlayout.setAlignment(Qt.AlignCenter)
 
@@ -962,6 +961,10 @@ class Stickers(QMainWindow):
         dlayout.addWidget(downloadButton)
 
         self.stickerDlg.setLayout(dlayout)
+        self.vLayout.addWidget(self.stickerDlg)
+
+        self.stickerDlg.resize(self.scroll.size())
+        self.stickerDlg.move(self.scroll.pos())
 
         self.stickerDlg.setVisible(True)
         self.scroll.setVisible(False)
@@ -970,6 +973,7 @@ class Stickers(QMainWindow):
         self.widget.setVisible(False)
         self.closeBtn.clicked.disconnect()
         self.closeBtn.clicked.connect(close)
+
     def manage_stickers(self):
         self.stickerDlg.setVisible(False)
         def delete_restore():
@@ -1058,10 +1062,13 @@ class Stickers(QMainWindow):
 
     def load_stickers(self):
         self.progressbar()
-        error = False
         if os.path.exists(self.path):
             br = False
-            onlyfiles = [f for f in listdir(self.path) if isfile(join(self.path, f)) if f.split(".")[-1].lower() == "jpg" or f.split(".")[-1].lower() == "png" or f.split(".")[-1].lower() == "webp"]
+            onlyfiles = [f for f in listdir(self.path)
+                         if isfile(join(self.path, f))
+                         if f.split(".")[-1].lower() == "jpg"
+                         or f.split(".")[-1].lower() == "png"
+                         or f.split(".")[-1].lower() == "webp"]
             bar_value = 0
             if not self.stickersLoaded and len(self.path):
                 config_object = ConfigParser()
@@ -1072,6 +1079,8 @@ class Stickers(QMainWindow):
                 if self.path[-1] != "/":
                     self.path += "/"
                 file = 0
+                col = 0
+                row = 0
                 button_list = []
                 self.stickers = {}
                 conf = ConfigParser()
@@ -1081,39 +1090,35 @@ class Stickers(QMainWindow):
                     segment = 100/len(onlyfiles)
                 else:
                     segment = 100/int(max["max_stickers_loadable"])
-                for i in range(len(onlyfiles)):
-                    if file > int(max["max_stickers_loadable"]):
+                for i in onlyfiles:
+                    if file+1 > int(max["max_stickers_loadable"]):
                         br = True
                         break
                     if br:
                         break
-                    for x in range(columns):
-                        if file+1 > int(max["max_stickers_loadable"]):
-                            br = True
-                            break
-                        bar_value += segment
-                        self.bar.setValue(bar_value)
-                        button = QPushButton()
-                        try:
-                            icon = self.path+onlyfiles[file]
-                            button.setObjectName("no_bg_btn")
-                            button.setIcon(QIcon(icon))
-                            button.setMinimumSize(width_height,width_height)
-                            button.setMaximumSize(width_height,width_height)
-                            size = QSize(width_height,width_height)
-                            self.stickers[button] = self.path+onlyfiles[file]
-                            button.setIconSize(size)
-                            button_list.append(button)
-                            self.layout.addWidget(button, i, x)
-                            button.clicked.connect(self.copy_sticker)
-                            button.setContextMenuPolicy(Qt.CustomContextMenu)
-                            button.customContextMenuRequested.connect(self.preview)
-                            file += 1
-
-                        except:
-                            self.stickersLoaded = True
-                            br = True
-                            break
+                    if file+1 > int(max["max_stickers_loadable"]):
+                        br = True
+                        break
+                    bar_value += segment
+                    self.bar.setValue(bar_value)
+                    button = QPushButton()
+                    icon = self.path + i
+                    button.setObjectName("no_bg_btn")
+                    button.setIcon(QIcon(icon))
+                    button.setFixedSize(width_height,width_height)
+                    size = QSize(width_height,width_height)
+                    self.stickers[button] = self.path + i
+                    button.setIconSize(size)
+                    button_list.append(button)
+                    self.layout.addWidget(button, row, col)
+                    button.clicked.connect(self.copy_sticker)
+                    button.setContextMenuPolicy(Qt.CustomContextMenu)
+                    button.customContextMenuRequested.connect(self.preview)
+                    file += 1
+                    col += 1
+                    if col % columns == 0:
+                        row += 1
+                        col = 0
 
                 try:
                     with open("utils/lastpack", "w") as pack:
@@ -1122,18 +1127,13 @@ class Stickers(QMainWindow):
                     pass
                 self.stickersLoaded = True
                 self.bar.hide()
-                if not error:
-                    if self.message.text() != "Favourites" and self.path == "utils/favourites/":
-                        self.animate_message("Favourites", None, False)
-                    elif os.path.exists(self.path+"/customname"):
-                        with open(self.path+"/customname") as f:
-                            self.animate_message(f.read(), None, False)
-                    elif self.message.text() != "Favourites" and self.path != "utils/favourites/":
-                        self.animate_message(self.path, "Path: ", False)
-                    elif self.message.text() == "Favourites" and self.path != "utils/favourites/":
-                        self.animate_message("Path: " + self.path, None, False)
-                    elif self.message.text() == "Favourites" and self.path == "utils/favourites/":
-                        pass
+                if self.path == "utils/favourites/":
+                    self.animate_message("Favourites", None, False)
+                elif os.path.exists(self.path+"/customname"):
+                    with open(self.path+"/customname") as f:
+                        self.animate_message(f.read())
+                else:
+                    self.animate_message("Path: " + self.path)
         else:
             with open("utils/lastpack", "w") as file:
                 file.write("")
