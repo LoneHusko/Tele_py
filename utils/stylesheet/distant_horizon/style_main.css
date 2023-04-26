@@ -5,6 +5,34 @@ QToolTip {
     color: #999999;
     border-radius: 0;
 }
+QProgressBar {
+    padding: 3px;
+    background-color: #111a2e;
+    border: 1px solid #475a85;
+    border-bottom: 1px solid transparent;
+    border-radius: 5px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    text-align: center;
+    color: transparent;
+    height: 30px;
+}
+#menu #update {
+    padding: 3px;
+    background-color: #111a2e;
+    border: 1px solid #475a85;
+    border-radius: 5px;
+    text-align: center;
+    color: transparent;
+    height: 30px;
+}
+
+QProgressBar::chunk {
+    background-color: #182644;
+    width: 4px;
+    border-radius: 2px;
+    margin: 0.5px;
+}
 #central_widget {
     border: none;
     border-radius: 5px;
@@ -14,13 +42,10 @@ QToolTip {
     background: transparent;
 }
 #menu {
-    background-color: rgb(24, 38, 68);
+    background-color: #182644;
     border: 1px solid #475a85;
     border-radius: 5px;
 }
-/* #preview {
-    background-color: rgba(24, 38, 68, .8);
-} */
 #no_bg_btn {
     border: none;
     background-color: none;
@@ -37,7 +62,7 @@ QLabel {
     border-radius: 3px;
     width: 50px;
     height: 30px;
-    color: #999999;
+    color: rgb(153, 153, 153);
     padding: 5px;
     background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 rgba(102, 102, 102, 0.25), stop:1 transparent)
 }
@@ -46,11 +71,11 @@ QLabel {
     background-color: qlineargradient( x1:1 y1:1, x2:0 y2:0, stop:0 #182644, stop:1 #355494);
 }
 #success{
-    color: #009f3b; 
+    color: #009f3b;
     background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #00260E, stop:1 transparent);
 }
 #error{
-    color:red; 
+    color:red;
     background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #540612, stop:1 transparent);
 }
 QPushButton {
@@ -70,11 +95,24 @@ QPushButton {
     color: #999999;
     background-color: qlineargradient( x1:1 y1:1, x2:0 y2:0, stop:0 #355494, stop:1 transparent);
 }
+#menu QPushButton:disabled {
+    text-decoration: line-through;
+    background-color: #203155;
+}
 QPushButton:hover, #menu QPushButton:hover {
     background-color: #355494;
 }
 
-QPushButton:pressed, #menu QPushButton:pressed {
+#menu #activeBtn {
+    background-color: qlineargradient( x1:1 y1:1, x2:0 y2:0, stop:0 #111111, stop:1 transparent);
+}
+#menu #activeBtn:hover {
+    background-color: #111111;
+}
+QPushButton:pressed {
+    background-color: rgb(17, 17, 17);
+}
+#menu QPushButton:pressed {
     background-color: rgba(17, 17, 17, 0.6);
 }
 QGridLayout {
@@ -137,30 +175,33 @@ QMenu::item:disabled:selected {
 #qLoad_menu::item:disabled:selected {
     background-color: transparent;
 }
-#style_menu {
+QFrame #menu #style_menu {
     background-color: #182644;
     border: 1px solid #475a85;
     border-radius: 0;
 }
-#style_menu::item:selected {
+QFrame #menu #style_menu #active {
+    font-weight: bold;
+}
+QFrame #menu #style_menu::item:selected {
     background-color: rgba(102, 102, 102, 0.6);
 }
-#style_menu::item:pressed {
+QFrame #menu #style_menu::item:pressed {
     background-color: #111111;
 }
-#style_menu::item {
+QFrame #menu #style_menu::item {
     color: #999999;
 }
-#style_menu::item:disabled {
+QFrame #menu #style_menu::item:disabled {
     margin: 3px;
 }
-#style_menu::item:disabled:selected {
+QFrame #menu #style_menu::item:disabled:selected {
     background-color: transparent;
 }
-#style_menu::item:selected {
+QFrame #menu #style_menu::item:selected {
     background-color: rgba(102, 102, 102, 0.6);
 }
-#style_menu::item:pressed {
+QFrame #menu #style_menu::item:pressed {
     background-color: #111111;
 }
 QLineEdit {
