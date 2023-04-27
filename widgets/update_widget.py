@@ -23,18 +23,15 @@ class UpdateWidget(QFrame):
         config_object = ConfigParser()
         config_object.read("utils/config.ini")
         settings = config_object["SETTINGS"]
-        style_location = settings["stylesheet"]
+        url = settings["update_url"]
 
         self.is_update_in_progress = False
         self.should_restart = False
 
-        self.update_url = "unavailable"
+        self.update_url = url
 
         self.current_version = VERSION
-        try:
-            self.latest_version = self.check_version()
-        except:
-            self.latest_version = "unavailable"
+        self.latest_version = "Not checked yet"
 
         self.message = QLabel()
         self.message_succes = QLabel()
@@ -58,17 +55,7 @@ class UpdateWidget(QFrame):
         self.check_for_updates_button.setFixedSize(QSize(300, 30))
         self.check_for_updates_button.clicked.connect(self.check_for_updates)
 
-        if self.latest_version == self.current_version:
-            self.update_button.setEnabled(False)
-            self.update_available = False
-        elif self.latest_version == "unavailable":
-            self.update_button.setEnabled(False)
-            self.update_available = False
-            self.check_for_updates_button.setEnabled(False)
-            self.update_button.setText("Update")
-        else:
-            self.update_button.setEnabled(True)
-            self.update_available = True
+        self.update_button.setEnabled(False)
 
         self.v_layout = QVBoxLayout()
         self.v_layout.setAlignment(Qt.AlignCenter)
@@ -92,6 +79,16 @@ class UpdateWidget(QFrame):
         self.check_for_updates_button.setText("Please wait...")
         self.check_for_updates_button.clicked.disconnect()
         def thread():
+            try:
+                self.download_file("latest_version.txt", self.update_url)
+            except:
+                self.message_error.setText("Failed to reach the server! Please try again later!")
+                winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
+                self.check_for_updates_button.setText("Check for updates")
+                self.message.setVisible(False)
+                self.message_error.setVisible(True)
+                self.check_for_updates_button.clicked.connect(self.check_for_updates)
+                return
             with open("_temp/latest_version.txt", "r") as f:
                 self.latest_version = f.read()
                 self.latest_version_label.setText(f"Latest version: {self.latest_version}")
@@ -129,7 +126,19 @@ class UpdateWidget(QFrame):
         self.update_button.setText("Getting update information...")
         # Download list of updateable files from server
         def thread():
-            self.download_file("updateable_files.txt", self.update_url)
+            try:
+                self.download_file("updateable_files.txt", self.update_url)
+            except:
+                self.update_button.clicked.connect(self.update_program)
+                winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
+                self.update_button.setText("Update")
+                self.message_error.setText("Failed to reach the server! Please try again later!")
+                self.message.setVisible(False)
+                self.message_error.setVisible(True)
+                self.bar.setVisible(False)
+                self.bar.setMaximum(100)
+                self.is_update_in_progress = False
+                return
 
             # Load list of updateable files from TXT file
             with open("_temp/updateable_files.txt", "r") as f:
@@ -142,7 +151,7 @@ class UpdateWidget(QFrame):
                 print("Attempting to download:", i.split("/")[-1], end="")
                 try:
                     self.download_file(i.split("/")[-1], self.update_url)
-                    print("Done!")
+                    print(" Done!")
                 except:
                     self.update_button.clicked.connect(self.update_program)
                     winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
@@ -169,5 +178,6 @@ class UpdateWidget(QFrame):
             self.bar.setMaximum(100)
             self.bar.setVisible(False)
             self.should_restart = True
+            self.is_update_in_progress = False
         x = Thread(target=thread)
         x.start()
