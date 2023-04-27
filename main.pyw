@@ -1,3 +1,4 @@
+# import logging
 import sys, os, shutil, threading, winsound, time, subprocess, re
 
 from PySide2.QtCore import *
@@ -12,7 +13,7 @@ from widgets import update_widget, settings_widget
 from io import BytesIO
 from PIL import Image
 
-VERSION = "v1.5 unreleased"
+VERSION = "v1.5"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
@@ -475,6 +476,8 @@ class Stickers(QMainWindow):
         def close():
             if self.update_widget.is_update_in_progress:
                 self.notify(text="The update is still running in the background!")
+            elif self.update_widget.should_restart:
+                self.notify(text="Please restart the application")
             self.update_widget.setVisible(False)
             self.backBtn.setVisible(False)
             self.scroll.setVisible(True)
@@ -486,6 +489,8 @@ class Stickers(QMainWindow):
         def back():
             if self.update_widget.is_update_in_progress:
                 self.notify(text="The update is still running in the background!")
+            elif self.update_widget.should_restart:
+                self.notify(text="Please restart the application")
             self.backBtn.setVisible(False)
             self.update_widget.setVisible(False)
             self.settings_menu()
@@ -1117,7 +1122,8 @@ copy_method = dc
 columns = 4
 hides = 0
 stylesheet = distant_horizon
-disable_updater = 0""")
+disable_updater = 0
+update_url = http://mirkiri.ml/projects/Tele-py/update/""")
     else:
         print("Done!")
         print("Checking keys...", end="")
@@ -1129,7 +1135,8 @@ disable_updater = 0""")
                 "columns": "4",
                 "hides": "0",
                 "stylesheet": "distant_horizon",
-                "disable_updater": "0"}
+                "disable_updater": "0",
+                "update_url": "http://mirkiri.ml/projects/Tele-py/update/"}
         for i in keys.keys():
             if not config_object.has_option("SETTINGS", i):
                 config[i] = keys[i]
