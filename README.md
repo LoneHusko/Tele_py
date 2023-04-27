@@ -16,6 +16,8 @@ ___
 
 More info can be found on [my website](http://mirkiri.ml/projects/Tele-py/).
 
+___
+
 The downloader was made by [Cartmanishere](https://github.com/Cartmanishere), and can be found [here](https://github.com/Cartmanishere/telegram-sticker-downloader).
 
-<sub><sup>P.S.: If there are no updates for a long time that means something big is coming...</sub></sup>
+`clipcopy.exe` is from [Sid's bytestream](https://sbytestream.pythonanywhere.com/software/cmdcopypaste)
