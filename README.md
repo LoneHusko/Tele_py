@@ -26,7 +26,7 @@ ___
 9. Click on `Download`
 10. Wait a few seconds for the download to finish
 11. Right click anywhere inside the blue border or click the back button in the top-right corner
-12. Click on `Quick Load` then sellect your stickerpack
+12. Click on `Quick Load` then select your stickerpack
 13. The menu will automatically close after a few moments
 
 ### Using the stickers
