@@ -385,11 +385,7 @@ class Stickers(QMainWindow):
 
                 send_to_clipboard(clp.CF_DIB, data)
             elif settings["copy_method"] == "cc":
-                subprocess.run(["modules\clipcopy.exe", {file_path}], \
-                               stdout=subprocess.DEVNULL, \
-                               stderr=subprocess.DEVNULL, \
-                               shell=True)
-
+                subprocess.run(["modules\clipcopy.exe", file_path], shell=True)
 
             print(f"Button: {QPushButton.sender(self)}")
 
