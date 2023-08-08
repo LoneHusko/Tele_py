@@ -22,6 +22,9 @@ class Stickers(QMainWindow):
     def __init__(self):
         super(Stickers, self).__init__()
 
+        self.q_load_dropdown_needs_update = False
+        self.manage_dropdown_needs_update = False
+
         self.settings_widget = settings_widget.SettingsWidget()
 
 
@@ -184,6 +187,9 @@ class Stickers(QMainWindow):
 
         self.centralWidget.setLayout(self.vLayout)
 
+        self.q_load_dropdown = self.quick_load_dropdown()
+        self.manage_dropdown = self.manage_stickers_dropdown()
+
     def progressbar(self):
         self.message.setObjectName("")
         try:
@@ -261,10 +267,7 @@ class Stickers(QMainWindow):
 
     def tray_icon_handle(self, reason):
         if reason == QSystemTrayIcon.Trigger and not self.visible:
-            flags = Qt.WindowFlags(Qt.FramelessWindowHint)
-            self.setWindowFlags(flags)
-            self.setVisible(True)
-            self.visible = True
+            self.window_to_visible()
         elif reason == QSystemTrayIcon.Context:
             self.tray_menu.popup(QCursor.pos())
 
@@ -386,6 +389,9 @@ class Stickers(QMainWindow):
                 send_to_clipboard(clp.CF_DIB, data)
             elif settings["copy_method"] == "cc":
                 subprocess.run(["modules\clipcopy.exe", file_path], shell=True)
+
+                # os.system(f"modules/clipcopy.exe {file_path}")
+
 
             print(f"Button: {QPushButton.sender(self)}")
 
@@ -595,6 +601,8 @@ class Stickers(QMainWindow):
                         message.setStyleSheet(styleSheet)
                         message.setText("Download completed!")
                         winsound.PlaySound("utils/success.wav", winsound.SND_ASYNC)
+                        self.q_load_dropdown_needs_update = True
+                        self.manage_dropdown_needs_update = True
                     else:
                         message.setObjectName("error")
                         self.bar.hide()
@@ -796,8 +804,11 @@ class Stickers(QMainWindow):
         dlayout.setAlignment(Qt.AlignCenter)
 
         qLoad = QPushButton("Quick Load")
-        dropdown = self.quick_load_dropdown()
-        qLoad.setMenu(dropdown)
+        if self.q_load_dropdown_needs_update:
+            print("Quick Load dropdown refreshed")
+            self.q_load_dropdown = self.quick_load_dropdown()
+            self.q_load_dropdown_needs_update = False
+        qLoad.setMenu(self.q_load_dropdown)
         qLoad.menu() # For some reason it only sets the menu if this line is here.
         qLoad.setToolTip("Load downloaded stickers quickly")
 
@@ -820,8 +831,11 @@ class Stickers(QMainWindow):
         clearButton.setToolTip("Unload the stickers from the interface")
 
         editButton = QPushButton("Manage stickerpacks")
-        dropdown = self.manage_stickers_dropdown()
-        editButton.setMenu(dropdown)
+        if self.manage_dropdown_needs_update:
+            print("Manage Stickers dropdown refreshed")
+            self.manage_dropdown = self.manage_stickers_dropdown()
+            self.manage_dropdown_needs_update = False
+        editButton.setMenu(self.manage_dropdown)
         editButton.menu()
         editButton.setToolTip("Manage downloaded stickerpacks")
 
@@ -872,6 +886,7 @@ class Stickers(QMainWindow):
         self.closeBtn.clicked.disconnect()
         self.closeBtn.clicked.connect(close)
 
+
     def manage_stickers(self):
         self.stickerDlg.setVisible(False)
         def delete_restore():
@@ -882,6 +897,8 @@ class Stickers(QMainWindow):
             removable = path.split("/")[0]+"/"+path.split("/")[-2]
             shutil.rmtree(removable)
             self.notify(text="Pack deleted!")
+            self.q_load_dropdown_needs_update = True
+            self.manage_dropdown_needs_update = True
             back()
         def delete_question():
             deleteButton.setText("Click again to confirm")
@@ -928,6 +945,9 @@ class Stickers(QMainWindow):
         else:
             label.setText("Edit pack: "+self.packs[QPushButton.sender(self)].split("/")[-2])
 
+        link_label = QLabel("Pack's link: https://t.me/addstickers/"+self.packs[QPushButton.sender(self)].split("/")[-2])
+        link_label.setFixedHeight(30)
+
         name = QLineEdit()
         name.setPlaceholderText("Name")
         name.setFixedWidth(300)
@@ -940,6 +960,7 @@ class Stickers(QMainWindow):
         deleteButton.setObjectName("highrisk")
 
         dlayout.addWidget(label)
+        dlayout.addWidget(link_label)
         dlayout.addWidget(name)
         dlayout.addWidget(renameButton)
         dlayout.addWidget(deleteButton)
@@ -1119,7 +1140,7 @@ columns = 4
 hides = 0
 stylesheet = distant_horizon
 disable_updater = 0
-update_url = http://mirkiri.ml/projects/Tele-py/update/""")
+update_url = https://api.github.com/repos/LoneHusko/Tele_py/releases/latest""")
     else:
         print("Done!")
         print("Checking keys...", end="")
@@ -1132,7 +1153,7 @@ update_url = http://mirkiri.ml/projects/Tele-py/update/""")
                 "hides": "0",
                 "stylesheet": "distant_horizon",
                 "disable_updater": "0",
-                "update_url": "http://mirkiri.ml/projects/Tele-py/update/"}
+                "update_url": "https://api.github.com/repos/LoneHusko/Tele_py/releases/latest"}
         for i in keys.keys():
             if not config_object.has_option("SETTINGS", i):
                 config[i] = keys[i]
@@ -1149,5 +1170,4 @@ update_url = http://mirkiri.ml/projects/Tele-py/update/""")
     app = QApplication(sys.argv)
     stickerWindow = Stickers()
     stickerWindow.show()
-
     app.exec_()
