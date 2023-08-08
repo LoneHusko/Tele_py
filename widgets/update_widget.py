@@ -207,7 +207,6 @@ class UpdateWidget(QFrame):
                 for i in file.readlines():
                     command = i.split(" ")[0].strip()
                     if permission_needed:
-                        time.sleep(5)
                         winsound.PlaySound("utils/user_action_needed.wav", winsound.SND_ASYNC)
 
                         permission_needed = False
