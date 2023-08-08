@@ -21,7 +21,7 @@ ___
 4. Open the menu
 5. Click on `Download Stickers`
 6. Enter any stickerpack's URL (example: `https://t.me/addstickers/{pack_name}` or `{pack_name}`)
-7. You can set a custom name fot the pack (optional)
+7. You can set a custom name for the pack (optional)
 8. Enter the bot's token you created previously (this will be saved so you only need to enter it once)
 9. Click on `Download`
 10. Wait a few seconds for the download to finish
