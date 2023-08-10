@@ -206,91 +206,105 @@ class UpdateWidget(QFrame):
             permission_needed = False
             with open("_temp/commandfile.txt") as file:
                 for i in file.readlines():
-                    command = i.split(" ")[0].strip()
-                    if permission_needed:
-                        winsound.PlaySound("utils/user_action_needed.wav", winsound.SND_ASYNC)
+                    try:
+                        command = i.split(" ")[0].strip()
+                        if permission_needed:
+                            winsound.PlaySound("utils/user_action_needed.wav", winsound.SND_ASYNC)
 
-                        permission_needed = False
-                        args = i.split(" ")
-                        args.remove(command)
-                        task = ""
-                        if command == "NOTIFY":
-                            task = "Display a notification"
-                        elif command == "MKFILE":
-                            task = f"Create a new file at \"{args[0].strip()}\""
-                        elif command == "WFILE":
-                            task = f"Modify a file's content at \"{args[0].strip()}\""
-                        elif command == "MKDIR":
-                            task = f"Create a new directory at \"{args[0].strip()}\""
-                        elif command == "RFILE":
-                            task = f"Replace \"{args[0].strip()}\" with \"{args[1].strip()}\""
-                        elif command == "RMFILE":
-                            task = f"Delete a file at \"{args[0].strip()}\""
-                        elif command == "RMDIR":
-                            task = f"Delete a directory at \"{args[0].strip()}\""
+                            permission_needed = False
+                            args = i.split(" ")
+                            args.remove(command)
+                            task = ""
+                            if command == "NOTIFY":
+                                task = "Display a notification"
+                            elif command == "MKFILE":
+                                task = f"Create a new file at \"{args[0].strip()}\""
+                            elif command == "WFILE":
+                                task = f"Modify a file's content at \"{args[0].strip()}\""
+                            elif command == "MKDIR":
+                                task = f"Create a new directory at \"{args[0].strip()}\""
+                            elif command == "RFILE":
+                                task = f"Replace \"{args[0].strip()}\" with \"{args[1].strip()}\""
+                            elif command == "RMFILE":
+                                task = f"Delete a file at \"{args[0].strip()}\""
+                            elif command == "RMDIR":
+                                task = f"Delete a directory at \"{args[0].strip()}\""
 
-                        self.ask_perm_widget.setVisible(True)
-                        self.ask_perm_widget.raise_()
-                        self.ask_perm_widget.message_label.setText("User permission is required to perform the "
-                                                                   f"following action as it is not "
-                                                                   f"crutial for the update:\n\n{task}")
-                        while True:
-                            if self.ask_perm_widget.accepted or self.ask_perm_widget.denied:
-                                break
-                            time.sleep(0.1)
-                        self.ask_perm_widget.setVisible(False)
-                        print("Accepted" if self.ask_perm_widget.accepted else "Denied")
-                        if self.ask_perm_widget.accepted:
-                            self.ask_perm_widget.accepted = False
-                            pass
-                        elif self.ask_perm_widget.denied:
-                            self.ask_perm_widget.denied = False
-                            continue
-
-                    if command != "ASKPERM":
-                        args = i.split(" ")
-                        args.remove(command)
-                    if command == "NOTIFY": #Notify the user and continue after closed
-                        text = " ".join(args)
-                        if self.isVisible():
-                            winsound.PlaySound("utils/notify.wav", winsound.SND_ASYNC)
-                            self.notify_widget.message_label.setText(text.strip()+"\n\nThe update will continue after you"
-                                                                                  " closed this notification.")
-                            self.notify_widget.setVisible(True)
-                            self.notify_widget.raise_()
-                            while self.notify_widget.isVisible():
+                            self.ask_perm_widget.setVisible(True)
+                            self.ask_perm_widget.raise_()
+                            self.ask_perm_widget.message_label.setText("User permission is required to perform the "
+                                                                       f"following action as it is not "
+                                                                       f"crutial for the update:\n\n{task}")
+                            while True:
+                                if self.ask_perm_widget.accepted or self.ask_perm_widget.denied:
+                                    break
                                 time.sleep(0.1)
-                        continue
-                    elif command == "ASKPERM": # Only execute the next line if permission is given
-                        permission_needed = True
-                        continue
-                    elif command == "MKFILE": # Make a file
-                        with open(args[0].strip(), f"w{args[1].strip() if args[1].strip() in 'tb' else ''}") as f:
-                            f.write(args[2].strip() .replace("*", " ").replace("^", "\n")
-                                    if args[1].strip() in 'tb'
-                                    else args[1].strip().replace("*", " ").replace("^", "\n"))
-                        continue
-                    elif command == "WFILE": # (over)write a file
-                        with open(args[0].strip(), f"{args[1].strip() if args[1].strip() in 'wa' else 'w'}") as f:
-                            f.write(args[2].strip().replace("*", " ").replace("^", "\n")
-                                    if args[1].strip() in 'wa'
-                                    else args[1].strip().replace("*", " ").replace("^", "\n"))
-                    elif command == "MKDIR": # Make a directory
-                        os.mkdir(args[0].strip())
-                        continue
-                    elif command == "RFILE": # Replace a file (src, dst)
-                        os.replace(args[0].strip(), args[1].strip())
-                        continue
-                    elif command == "RMFILE": # Delete a file
-                        os.remove(args[0].strip())
-                        continue
-                    elif command == "RMDIR": #Remove a directory
-                        shutil.rmtree(args[0].strip())
-                        continue
-                    elif command == "PRNTARGS": # Print arguments (debug only)
-                        print(args)
-                        continue
+                            self.ask_perm_widget.setVisible(False)
+                            print("Accepted" if self.ask_perm_widget.accepted else "Denied")
+                            if self.ask_perm_widget.accepted:
+                                self.ask_perm_widget.accepted = False
+                                pass
+                            elif self.ask_perm_widget.denied:
+                                self.ask_perm_widget.denied = False
+                                continue
 
+                        if command != "ASKPERM":
+                            args = i.split(" ")
+                            args.remove(command)
+                        if command == "NOTIFY": #Notify the user and continue after closed
+                            text = " ".join(args)
+                            if self.isVisible():
+                                winsound.PlaySound("utils/notify.wav", winsound.SND_ASYNC)
+                                self.notify_widget.message_label.setText(text.strip()+"\n\nThe update will continue after you"
+                                                                                      " closed this notification.")
+                                self.notify_widget.setVisible(True)
+                                self.notify_widget.raise_()
+                                while self.notify_widget.isVisible():
+                                    time.sleep(0.1)
+                            continue
+                        elif command == "ASKPERM": # Only execute the next line if permission is given
+                            permission_needed = True
+                            continue
+                        elif command == "MKFILE": # Make a file
+                            with open(args[0].strip(), f"w{args[1].strip() if args[1].strip() in 'tb' else ''}") as f:
+                                f.write(args[2].strip() .replace("*", " ").replace("^", "\n")
+                                        if args[1].strip() in 'tb'
+                                        else args[1].strip().replace("*", " ").replace("^", "\n"))
+                            continue
+                        elif command == "WFILE": # (over)write a file
+                            with open(args[0].strip(), f"{args[1].strip() if args[1].strip() in 'wa' else 'w'}") as f:
+                                f.write(args[2].strip().replace("*", " ").replace("^", "\n")
+                                        if args[1].strip() in 'wa'
+                                        else args[1].strip().replace("*", " ").replace("^", "\n"))
+                        elif command == "MKDIR": # Make a directory
+                            os.mkdir(args[0].strip())
+                            continue
+                        elif command == "RFILE": # Replace a file (src, dst)
+                            os.replace(args[0].strip(), args[1].strip())
+                            continue
+                        elif command == "RMFILE": # Delete a file
+                            if os.path.exists(args[0].strip()):
+                                os.remove(args[0].strip())
+                            continue
+                        elif command == "RMDIR": #Remove a directory
+                            if os.path.exists(args[0].strip()):
+                                shutil.rmtree(args[0].strip())
+                            continue
+                        elif command == "PRNTARGS": # Print arguments (debug only)
+                            print(args)
+                            continue
+                    except Exception as error:
+                        print(f"{error} {error.args}")
+                        self.update_button.clicked.connect(self.update_program)
+                        winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
+                        self.update_button.setText("Update")
+                        self.message_error.setText("Failed to execute command! Update cancelled!")
+                        self.message.setVisible(False)
+                        self.message_error.setVisible(True)
+                        self.bar.setVisible(False)
+                        self.bar.setMaximum(100)
+                        self.is_update_in_progress = False
+                        return
 
             shutil.rmtree("_temp")
             winsound.PlaySound("utils/success.wav", winsound.SND_ASYNC)
