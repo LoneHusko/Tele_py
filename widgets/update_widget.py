@@ -73,7 +73,7 @@ class UpdateWidget(QFrame):
         self.check_for_updates_button.setFixedSize(QSize(300, 30))
         self.check_for_updates_button.clicked.connect(self.check_for_updates)
 
-        self.read_release_notes_button = QPushButton("Read notes")
+        self.read_release_notes_button = QPushButton("Read release notes")
         self.read_release_notes_button.setFixedSize(QSize(145, 30))
         self.read_release_notes_button.clicked.connect(self.read_notes)
 
@@ -103,7 +103,8 @@ class UpdateWidget(QFrame):
     def read_notes(self):
         self.release_notes_widget.setVisible(True)
         self.release_notes_widget.raise_()
-        self.release_notes_widget.release_notes_label.setText(self.notes)
+        self.release_notes_widget.release_notes_label.setText(self.notes.replace("  -","⠀   -")) #Contains blank unicode
+                                                                                                 #character
 
 
     def check_for_updates(self):

@@ -8,7 +8,6 @@ class ReleaseNotesWidget(QFrame):
         self.setObjectName("menu")
         self.setVisible(False)
         self.setFixedSize(400,400)
-        #480x444
 
         scroll_widget = QWidget()
         scroll = QScrollArea()

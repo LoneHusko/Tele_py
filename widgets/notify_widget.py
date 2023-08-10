@@ -8,7 +8,6 @@ class NotifyWidget(QFrame):
         self.setObjectName("menu")
         self.setVisible(False)
         self.setFixedSize(400,200)
-        #480x444
 
         self.message_label = QLabel()
 

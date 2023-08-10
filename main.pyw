@@ -13,7 +13,7 @@ from widgets import update_widget, settings_widget
 from io import BytesIO
 from PIL import Image
 
-VERSION = "v1.5-Beta"
+VERSION = "v1.5-beta.1"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
@@ -552,7 +552,6 @@ class Stickers(QMainWindow):
                 message.setStyleSheet(styleSheet)
                 downloadButton.setText("Update")
                 message.setText("Stickerpack is already downloaded, but can be updated")
-            # elif message.text() == "Stickerpack is already downloaded, but can be updated":
             else:
                 message.setObjectName("")
                 message.setStyleSheet(styleSheet)
@@ -922,10 +921,12 @@ class Stickers(QMainWindow):
             self.scroll.setVisible(True)
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(self.close_window)
+            widget.deleteLater()
         def back():
             widget.setVisible(False)
             self.backBtn.setVisible(False)
             self.menu()
+            widget.deleteLater()
         path = self.packs[QPushButton.sender(self)]
         widget = QWidget()
         widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -939,11 +940,13 @@ class Stickers(QMainWindow):
         label = QLabel()
         label.setFixedHeight(30)
         label.setFixedWidth(300)
+        pack_name = ""
         if os.path.exists(self.packs[QPushButton.sender(self)]+"customname"):
             with open(self.packs[QPushButton.sender(self)]+"customname") as name:
-                label.setText("Edit pack: "+name.read())
+                pack_name = name.read()
         else:
-            label.setText("Edit pack: "+self.packs[QPushButton.sender(self)].split("/")[-2])
+            pack_name = self.packs[QPushButton.sender(self)].split("/")[-2]
+        label.setText(f"Edit pack: {pack_name}")
 
         link_label = QLabel("Pack's link: https://t.me/addstickers/"+self.packs[QPushButton.sender(self)].split("/")[-2])
         link_label.setFixedHeight(30)
@@ -959,10 +962,13 @@ class Stickers(QMainWindow):
         deleteButton.clicked.connect(lambda :delete_question())
         deleteButton.setObjectName("highrisk")
 
+        spacer = QSpacerItem(5, 30)
+
         dlayout.addWidget(label)
         dlayout.addWidget(link_label)
         dlayout.addWidget(name)
         dlayout.addWidget(renameButton)
+        dlayout.addItem(spacer)
         dlayout.addWidget(deleteButton)
 
         try:

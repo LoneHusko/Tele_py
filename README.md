@@ -39,4 +39,6 @@ Right-click on any sticker to open the preview. You can also save it to you favo
 ___
 The downloader was made by [Cartmanishere](https://github.com/Cartmanishere), and can be found [here](https://github.com/Cartmanishere/telegram-sticker-downloader).
 
+Heavily inspired by [sleddev](https://github.com/sleddev)'s [TG Stickers Everywhere](https://github.com/sleddev/tg-stickers)
+
 `clipcopy.exe` is from [Sid's bytestream](https://sbytestream.pythonanywhere.com/software/cmdcopypaste)
