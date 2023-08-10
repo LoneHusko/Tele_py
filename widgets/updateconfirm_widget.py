@@ -12,7 +12,6 @@ class ConfirmUpdateWidget(QFrame):
 
 
         self.message_label = QLabel()
-        # self.message_label.setFixedHeight(50)
         self.message_label.setWordWrap(True)
 
         spacer = QSpacerItem(5, 30)

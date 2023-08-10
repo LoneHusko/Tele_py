@@ -14,13 +14,12 @@ class AskPermWidget(QFrame):
         self.denied = False
 
         self.message_label = QLabel()
-        # self.message_label.setFixedHeight(50)
         self.message_label.setWordWrap(True)
 
         spacer = QSpacerItem(5, 30)
 
         button_layout = QHBoxLayout()
-        self.deny_button = QPushButton("Disallow")
+        self.deny_button = QPushButton("Deny")
         self.deny_button.setFixedHeight(30)
         self.accept_button = QPushButton("Allow")
         self.accept_button.setFixedHeight(30)
