@@ -103,7 +103,7 @@ class UpdateWidget(QFrame):
     def read_notes(self):
         self.release_notes_widget.setVisible(True)
         self.release_notes_widget.raise_()
-        self.release_notes_widget.release_notes_label.setText(self.notes.replace("  -","⠀   -")) #Contains blank unicode
+        self.release_notes_widget.release_notes_label.setText(self.notes.replace("   -","⠀   -"))#Contains blank unicode
                                                                                                  #character
 
 
@@ -202,6 +202,20 @@ class UpdateWidget(QFrame):
                 self.bar.setMaximum(100)
                 self.is_update_in_progress = False
                 return
+            self.update_button.setText("Checking the commandfile...")
+            with open("_temp/commandfile.txt") as file:
+                for i in file.readlines():
+                    if "://" in i or r":\\" in i or "../" in i and "NOTIFIY" not in i:
+                        self.update_button.clicked.connect(self.update_program)
+                        winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
+                        self.update_button.setText("Update")
+                        self.message_error.setText("Update refused!")
+                        self.message.setVisible(False)
+                        self.message_error.setVisible(True)
+                        self.bar.setVisible(False)
+                        self.bar.setMaximum(100)
+                        self.is_update_in_progress = False
+                        return
             self.update_button.setText("Updating...")
             permission_needed = False
             with open("_temp/commandfile.txt") as file:
