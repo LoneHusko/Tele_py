@@ -9,11 +9,11 @@ from os import listdir
 import win32clipboard as clp
 from configparser import ConfigParser
 from modules import downloader
-from widgets import update_widget, settings_widget
+from widgets import update_widget, settings_widget, download_widget, menu_widget
 from io import BytesIO
 from PIL import Image
 
-VERSION = "v1.5-beta.1"
+VERSION = "v1.5"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
@@ -22,10 +22,14 @@ class Stickers(QMainWindow):
     def __init__(self):
         super(Stickers, self).__init__()
 
-        self.q_load_dropdown_needs_update = False
-        self.manage_dropdown_needs_update = False
 
         self.settings_widget = settings_widget.SettingsWidget()
+
+        self.download_widget = download_widget.DownloadWidget()
+        self.download_widget.downloader = downloader
+        self.download_widget.menu_dropdown_update_func = self.update_menu_dropdown
+
+        self.menu_widget = menu_widget.MenuWidget()
 
 
         self.tray_icon = QSystemTrayIcon(self)
@@ -164,6 +168,8 @@ class Stickers(QMainWindow):
         self.vLayout.addWidget(self.scroll)
 
         self.vLayout.addWidget(self.settings_widget)
+        self.vLayout.addWidget(self.download_widget)
+        self.vLayout.addWidget(self.menu_widget)
 
         if settings["disable_updater"] == "0":
             self.update_widget = update_widget.UpdateWidget(VERSION)
@@ -176,19 +182,29 @@ class Stickers(QMainWindow):
             self.settings_widget.updateBtn.setVisible(False)
 
         self.settings_widget.setVisible(False)
+        self.download_widget.setVisible(False)
+        self.menu_widget.setVisible(False)
         self.settings_widget.dcComp.clicked.connect(self.apply_style)
         self.settings_widget.gimpComp.clicked.connect(self.apply_style)
         self.settings_widget.clipcopy.clicked.connect(self.apply_style)
         self.settings_widget.hideWindowBtn.clicked.connect(self.apply_style)
         self.settings_widget.closeWindowBtn.clicked.connect(self.apply_style)
 
-        # if self.update_widget.update_available:
-        #     self.notify("New update available!")
+        #Todo: implement auto-check for updatesa
 
         self.centralWidget.setLayout(self.vLayout)
 
-        self.q_load_dropdown = self.quick_load_dropdown()
-        self.manage_dropdown = self.manage_stickers_dropdown()
+        # self.menu_widget.qLoad.setMenu(self.quick_load_dropdown())
+        # self.menu_widget.qLoad.menu()
+        # self.menu_widget.editButton.setMenu(self.manage_stickers_dropdown())
+        # self.menu_widget.editButton.menu()
+
+        self.update_menu_dropdown()
+
+    def update_menu_dropdown(self):
+        print("Updated")
+        self.menu_widget.set_menu(self.quick_load_dropdown(),self.manage_stickers_dropdown())
+
 
     def progressbar(self):
         self.message.setObjectName("")
@@ -530,10 +546,12 @@ class Stickers(QMainWindow):
 
 
     def download_stickers(self):
-        self.stickerDlg.setVisible(False)
+        self.download_widget.message("")
+        self.menu_widget.setVisible(False)
         self.backBtn.setVisible(True)
         def close():
-            dlg.setVisible(False)
+            self.download_widget.stickerURL.setText("")
+            self.download_widget.setVisible(False)
             self.backBtn.setVisible(False)
             self.widget.setVisible(True)
             self.settings.setVisible(True)
@@ -542,146 +560,13 @@ class Stickers(QMainWindow):
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(self.close_window)
         def back():
-            dlg.setVisible(False)
+            self.download_widget.stickerURL.setText("")
+            self.download_widget.setVisible(False)
             self.backBtn.setVisible(False)
             self.menu()
-
-        def check_packs():
-            if os.path.exists(f"downloads/{stickerURL.text()}") and stickerURL.text() != "":
-                message.setObjectName("")
-                message.setStyleSheet(styleSheet)
-                downloadButton.setText("Update")
-                message.setText("Stickerpack is already downloaded, but can be updated")
-            else:
-                message.setObjectName("")
-                message.setStyleSheet(styleSheet)
-                downloadButton.setText("Download")
-                message.setText("")
-
-        def download():
-
-
-            def thread():
-                failed = False
-                with open("utils/bottoken", "w") as token:
-                    token.write(botToken.text())
-                try:
-                    message.setObjectName("")
-                    message.setText("Preparing for download...")
-
-                    sticker_downloader = downloader.StickerDownloader(botToken.text())
-
-                    name = stickerURL.text()
-                    if name != "":
-
-                        if os.path.exists(f"downloads/{name}"):
-                            shutil.rmtree(f"downloads/{name}")
-
-                        message.setStyleSheet(styleSheet)
-                        message.setText("Getting pack info...")
-                        name = (name.split('/')[-1])
-
-
-                        print('=' * 60)
-                        pack = sticker_downloader.get_sticker_set(name)
-
-                        print('-' * 60)
-                        message.setText("Downloading files...")
-                        sticker_downloader.download_sticker_set(pack)
-                        message.setText("Writing customname file...")
-                        if customName.text():
-                            with open(f"downloads/{name}/customname", "wt") as f:
-                                f.write(customName.text())
-                        else:
-                            with open(f"downloads/{name}/customname", "wt") as f:
-                                f.write(pack["title"])
-                        message.setObjectName("success")
-                        self.bar.hide()
-                        message.setStyleSheet(styleSheet)
-                        message.setText("Download completed!")
-                        winsound.PlaySound("utils/success.wav", winsound.SND_ASYNC)
-                        self.q_load_dropdown_needs_update = True
-                        self.manage_dropdown_needs_update = True
-                    else:
-                        message.setObjectName("error")
-                        self.bar.hide()
-                        message.setStyleSheet(styleSheet)
-                        message.setText("Invalid URL!")
-                        winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
-
-                except Exception as exception:
-                    print(exception)
-                    message.setObjectName("error")
-                    self.bar.hide()
-                    message.setStyleSheet(styleSheet)
-                    message.setText("Download failed! Please check the token and the URL!")
-                    winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
-
-            x = threading.Thread(target=thread)
-
-            self.progressbar()
-            self.bar.setMaximum(0)
-
-            x.start()
-
-        dlg = QWidget()
-        dlg.setContextMenuPolicy(Qt.CustomContextMenu)
-        dlg.customContextMenuRequested.connect(back)
-        dlg.setObjectName("menu")
-        dlayout = QVBoxLayout()
-        dlayout.setAlignment(Qt.AlignCenter)
-        self.vLayout.addWidget(dlg)
-        try:
-            with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
-                dlg.setStyleSheet(str(style.read()))
-                styleSheet = str(style.read())
-        except:
-            pass
-
-        message = QLabel()
-        message.setFixedHeight(30)
-        message.setFixedWidth(300)
-        message.setAlignment(Qt.AlignCenter)
-        botToken = QLineEdit()
-        botToken.returnPressed.connect(download)
-        botToken.setFixedWidth(300)
-        botToken.setEchoMode(QLineEdit.Password)
-        botToken.setPlaceholderText("Token")
-        try:
-            with open("utils/bottoken", "r") as token:
-                _ = token.read()
-                botToken.setText(_.strip())
-        except:
-            pass
-
-        customName = QLineEdit()
-        customName.returnPressed.connect(download)
-        customName.setPlaceholderText("Custom name for the pack (leave blank for default)")
-        customName.setFixedWidth(300)
-
-        stickerURL = QLineEdit()
-        stickerURL.setFocus()
-        stickerURL.textChanged.connect(check_packs)
-        stickerURL.returnPressed.connect(download)
-        stickerURL.setPlaceholderText("Sticker URL")
-        stickerURL.setFixedWidth(300)
-
-        downloadButton = QPushButton("Download")
-        downloadButton.setFixedWidth(300)
-        downloadButton.clicked.connect(download)
-        downloadButton.setFixedHeight(30)
-
-
-
-        dlayout.addWidget(message)
-        dlayout.addWidget(stickerURL)
-        dlayout.addWidget(customName)
-        dlayout.addWidget(botToken)
-        dlayout.addWidget(downloadButton)
-        dlg.setLayout(dlayout)
-
-        stickerURL.setFocus()
-
+        self.download_widget.customContextMenuRequested.connect(back)
+        self.download_widget.setVisible(True)
+        self.download_widget.stickerURL.setFocus()
         try:
             self.backBtn.clicked.disconnect()
         except:
@@ -703,7 +588,7 @@ class Stickers(QMainWindow):
     def quick_load_dropdown(self):
         def close():
             self.scroll.setVisible(True)
-            self.stickerDlg.setVisible(False)
+            self.menu_widget.setVisible(False)
             self.widget.setVisible(True)
             self.settings.setVisible(True)
             self.loadStickersBtn.setVisible(True)
@@ -787,97 +672,36 @@ class Stickers(QMainWindow):
 
     def menu(self):
         def close():
+            self.menu_widget.setVisible(False)
             self.scroll.setVisible(True)
-            self.stickerDlg.deleteLater()
             self.widget.setVisible(True)
             self.settings.setVisible(True)
             self.loadStickersBtn.setVisible(True)
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(self.close_window)
-        self.stickerDlg = QWidget()
-        self.stickerDlg.setObjectName("menu")
-        self.stickerDlg.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.stickerDlg.customContextMenuRequested.connect(close)
-        # self.vLayout.addWidget(self.stickerDlg)
-        dlayout = QVBoxLayout()
-        dlayout.setAlignment(Qt.AlignCenter)
+        self.menu_widget.customContextMenuRequested.connect(close)
 
-        qLoad = QPushButton("Quick Load")
-        if self.q_load_dropdown_needs_update:
-            print("Quick Load dropdown refreshed")
-            self.q_load_dropdown = self.quick_load_dropdown()
-            self.q_load_dropdown_needs_update = False
-        qLoad.setMenu(self.q_load_dropdown)
-        qLoad.menu() # For some reason it only sets the menu if this line is here.
-        qLoad.setToolTip("Load downloaded stickers quickly")
+        try: self.menu_widget.browseButton.clicked.disconnect()
+        except: pass
+        self.menu_widget.browseButton.clicked.connect(self.set_sticker_path)
+        try: self.menu_widget.setButton.clicked.disconnect()
+        except: pass
+        self.menu_widget.setButton.clicked.connect(self.check_stickers)
+        self.menu_widget.setButton.clicked.connect(close)
+        try: self.menu_widget.favButton.clicked.disconnect()
+        except: pass
+        self.menu_widget.favButton.clicked.connect(self.load_favourites)
+        self.menu_widget.favButton.clicked.connect(close)
+        try: self.menu_widget.clearButton.clicked.disconnect()
+        except: pass
+        self.menu_widget.clearButton.clicked.connect(self.unload_stickers)
+        try: self.menu_widget.downloadButton.clicked.disconnect()
+        except: pass
+        self.menu_widget.downloadButton.clicked.connect(self.download_stickers)
 
-        browseButton = QPushButton("Browse Stickers")
-        browseButton.clicked.connect(self.set_sticker_path)
-        browseButton.setToolTip("Browse folders and load stickers from them")
 
-        setButton = QPushButton("Load Stickers")
-        setButton.clicked.connect(self.check_stickers)
-        setButton.clicked.connect(close)
-        setButton.setToolTip("Load the stickers to the interface")
 
-        self.favButton = QPushButton("Load Favourites")
-        self.favButton.clicked.connect(self.load_favourites)
-        self.favButton.clicked.connect(close)
-        self.favButton.setToolTip("Load stickers that you previously saved to your favourites")
-
-        clearButton = QPushButton("Unload Stickers")
-        clearButton.clicked.connect(self.unload_stickers)
-        clearButton.setToolTip("Unload the stickers from the interface")
-
-        editButton = QPushButton("Manage stickerpacks")
-        if self.manage_dropdown_needs_update:
-            print("Manage Stickers dropdown refreshed")
-            self.manage_dropdown = self.manage_stickers_dropdown()
-            self.manage_dropdown_needs_update = False
-        editButton.setMenu(self.manage_dropdown)
-        editButton.menu()
-        editButton.setToolTip("Manage downloaded stickerpacks")
-
-        downloadButton = QPushButton("Download Stickers")
-        downloadButton.setToolTip("Download stickers from Telegram")
-        downloadButton.clicked.connect(self.download_stickers)
-
-        qLoad.setFixedWidth(300)
-        qLoad.setFixedHeight(30)
-
-        browseButton.setFixedWidth(300)
-        browseButton.setFixedHeight(30)
-
-        setButton.setFixedWidth(300)
-        setButton.setFixedHeight(30)
-
-        self.favButton.setFixedWidth(300)
-        self.favButton.setFixedHeight(30)
-
-        clearButton.setFixedWidth(300)
-        clearButton.setFixedHeight(30)
-
-        editButton.setFixedWidth(300)
-        editButton.setFixedHeight(30)
-
-        downloadButton.setFixedWidth(300)
-        downloadButton.setFixedHeight(30)
-
-        dlayout.addWidget(qLoad)
-        dlayout.addWidget(editButton)
-        dlayout.addWidget(browseButton)
-        dlayout.addWidget(setButton)
-        dlayout.addWidget(self.favButton)
-        dlayout.addWidget(clearButton)
-        dlayout.addWidget(downloadButton)
-
-        self.stickerDlg.setLayout(dlayout)
-        self.vLayout.addWidget(self.stickerDlg)
-
-        self.stickerDlg.resize(self.scroll.size())
-        self.stickerDlg.move(self.scroll.pos())
-
-        self.stickerDlg.setVisible(True)
+        self.menu_widget.setVisible(True)
         self.scroll.setVisible(False)
         self.loadStickersBtn.setVisible(False)
         self.settings.setVisible(False)
@@ -887,7 +711,7 @@ class Stickers(QMainWindow):
 
 
     def manage_stickers(self):
-        self.stickerDlg.setVisible(False)
+        self.menu_widget.setVisible(False)
         def delete_restore():
             deleteButton.clicked.disconnect()
             deleteButton.setText("Delete")
@@ -896,8 +720,7 @@ class Stickers(QMainWindow):
             removable = path.split("/")[0]+"/"+path.split("/")[-2]
             shutil.rmtree(removable)
             self.notify(text="Pack deleted!")
-            self.q_load_dropdown_needs_update = True
-            self.manage_dropdown_needs_update = True
+            self.update_menu_dropdown()
             back()
         def delete_question():
             deleteButton.setText("Click again to confirm")
@@ -927,6 +750,11 @@ class Stickers(QMainWindow):
             self.backBtn.setVisible(False)
             self.menu()
             widget.deleteLater()
+        def update_pack():
+            back()
+            self.download_stickers()
+            self.download_widget.stickerURL.setText(pack_link)
+            self.download_widget.download()
         path = self.packs[QPushButton.sender(self)]
         widget = QWidget()
         widget.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -941,11 +769,12 @@ class Stickers(QMainWindow):
         label.setFixedHeight(30)
         label.setFixedWidth(300)
         pack_name = ""
+        pack_link = self.packs[QPushButton.sender(self)].split("/")[-2]
         if os.path.exists(self.packs[QPushButton.sender(self)]+"customname"):
             with open(self.packs[QPushButton.sender(self)]+"customname") as name:
                 pack_name = name.read()
         else:
-            pack_name = self.packs[QPushButton.sender(self)].split("/")[-2]
+            pack_name = pack_link
         label.setText(f"Edit pack: {pack_name}")
 
         link_label = QLabel("Pack's link: https://t.me/addstickers/"+self.packs[QPushButton.sender(self)].split("/")[-2])
@@ -957,6 +786,9 @@ class Stickers(QMainWindow):
         renameButton = QPushButton("Rename")
         renameButton.setFixedHeight(30)
         renameButton.clicked.connect(rename)
+        update_button = QPushButton("Update pack")
+        update_button.setFixedHeight(30)
+        update_button.clicked.connect(update_pack)
         deleteButton = QPushButton("Delete")
         deleteButton.setFixedHeight(30)
         deleteButton.clicked.connect(lambda :delete_question())
@@ -968,6 +800,7 @@ class Stickers(QMainWindow):
         dlayout.addWidget(link_label)
         dlayout.addWidget(name)
         dlayout.addWidget(renameButton)
+        dlayout.addWidget(update_button)
         dlayout.addItem(spacer)
         dlayout.addWidget(deleteButton)
 
