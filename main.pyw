@@ -27,7 +27,7 @@ class Stickers(QMainWindow):
 
         self.download_widget = download_widget.DownloadWidget()
         self.download_widget.downloader = downloader
-        self.download_widget.menu_dropdown_update_func = self.update_menu_dropdown
+        self.download_widget.menu_dropdown_update_func = self.update_menu_dropdown_remote
 
         self.menu_widget = menu_widget.MenuWidget()
 
@@ -194,12 +194,11 @@ class Stickers(QMainWindow):
 
         self.centralWidget.setLayout(self.vLayout)
 
-        # self.menu_widget.qLoad.setMenu(self.quick_load_dropdown())
-        # self.menu_widget.qLoad.menu()
-        # self.menu_widget.editButton.setMenu(self.manage_stickers_dropdown())
-        # self.menu_widget.editButton.menu()
-
         self.update_menu_dropdown()
+
+        self.should_update_menu_dropdown = False
+    def update_menu_dropdown_remote(self):
+        self.should_update_menu_dropdown = True
 
     def update_menu_dropdown(self):
         print("Updated")
@@ -699,7 +698,9 @@ class Stickers(QMainWindow):
         except: pass
         self.menu_widget.downloadButton.clicked.connect(self.download_stickers)
 
-
+        if self.should_update_menu_dropdown:
+            self.should_update_menu_dropdown = False
+            self.update_menu_dropdown()
 
         self.menu_widget.setVisible(True)
         self.scroll.setVisible(False)
