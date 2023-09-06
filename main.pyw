@@ -13,7 +13,7 @@ from widgets import update_widget, settings_widget, download_widget, menu_widget
 from io import BytesIO
 from PIL import Image
 
-VERSION = "v1.5"
+VERSION = "v1.5.0"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
