@@ -8,12 +8,9 @@ QProgressBar {
     background-color: #111a2e;
     border: 1px solid #999999;
     border-radius: 5px;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
     text-align: center;
     color: transparent;
     height: 30px;
-    border-bottom-color: #182644;
 }
 #menu #update {
     padding: 3px;
@@ -73,7 +70,7 @@ QLabel {
 }
 #error{
     color:red; 
-    background-color:  #540612;
+    background-color:  #44050f;
 }
 QPushButton {
     border: none;
@@ -114,7 +111,8 @@ QScrollBar:vertical {
 QGridLayout {
     background: transparent;
 }
-QScrollArea {
+QScrollArea, #scroll {
+    border: none;
     background: transparent;
 }
 QScrollBar::handle::vertical {

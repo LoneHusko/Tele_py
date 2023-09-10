@@ -11,9 +11,23 @@ class SettingsWidget(QFrame):
 
         self.setObjectName("menu")
 
-        self.layout = QVBoxLayout()
-        self.layout.setAlignment(Qt.AlignCenter)
-        self.setLayout(self.layout)
+        # Layout of Container Widget
+        self.v_layout = QVBoxLayout(self)
+        self.v_layout.setAlignment(Qt.AlignCenter)
+        self.widget = QWidget()
+        self.widget.setObjectName("no_bg_widget")
+        self.widget.setLayout(self.v_layout)
+
+        # Scroll Area Properties
+        self.scroll = QScrollArea()
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff )
+        self.scroll.setObjectName("scroll")
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(self.widget)
+
+        self.setLayout(QHBoxLayout())
+        self.layout().addWidget(self.scroll)
+
 
         config_object = ConfigParser()
         config_object.read("utils/config.ini")
@@ -95,19 +109,56 @@ class SettingsWidget(QFrame):
         compLayout.addWidget(self.clipcopy, 0, 2)
         groupComp.setLayout(compLayout)
 
+        ask_pack_group = QGroupBox("Ask to load last pack")
+        ask_pack_group.setLayout(QVBoxLayout())
+
+        ask_pack = "Disabled"
+        self.ask_last_pack = QPushButton()
+        if self.settings["ask_last_pack"] == "1":
+            ask_pack = "Enabled"
+            self.ask_last_pack.setObjectName("activeBtn")
+        self.ask_last_pack.setText(ask_pack)
+        self.ask_last_pack.clicked.connect(self.ask_pack)
+        ask_pack_group.layout().addWidget(self.ask_last_pack)
+
+        self.ask_last_pack.setFixedHeight(30)
+
         self.updateBtn = QPushButton("Update")
         self.updateBtn.setFixedHeight(30)
 
         self.settingsMessage.setFixedWidth(300)
 
-        self.layout.addWidget(self.settingsMessage)
-        self.layout.addWidget(columnsGroup)
-        self.layout.addWidget(maxfileGroup)
-        self.layout.addWidget(groupComp)
-        self.layout.addWidget(hidesGroup)
-        self.layout.addWidget(self.styleListBtn)
-        self.layout.addWidget(self.applyStyleBtn)
-        self.layout.addWidget(self.updateBtn)
+        self.v_layout.addWidget(self.settingsMessage)
+        self.v_layout.addWidget(columnsGroup)
+        self.v_layout.addWidget(maxfileGroup)
+        self.v_layout.addWidget(groupComp)
+        self.v_layout.addWidget(hidesGroup)
+        self.v_layout.addWidget(ask_pack_group)
+        self.v_layout.addWidget(self.styleListBtn)
+        self.v_layout.addWidget(self.applyStyleBtn)
+        self.v_layout.addWidget(self.updateBtn)
+
+    def ask_pack(self):
+        if self.ask_last_pack.objectName() == "activeBtn":
+            self.ask_last_pack.setObjectName("")
+            self.ask_last_pack.setText("Disabled")
+            config_object = ConfigParser()
+            config_object.read("utils/config.ini")
+            settings = config_object["SETTINGS"]
+            settings["ask_last_pack"] = "0"
+
+            with open('utils/config.ini', 'w') as conf:
+                config_object.write(conf)
+        else:
+            self.ask_last_pack.setObjectName("activeBtn")
+            self.ask_last_pack.setText("Enabled")
+            config_object = ConfigParser()
+            config_object.read("utils/config.ini")
+            settings = config_object["SETTINGS"]
+            settings["ask_last_pack"] = "1"
+
+            with open('utils/config.ini', 'w') as conf:
+                config_object.write(conf)
 
     def change_style(self):
         self.style_sheet = self.stylesheets[QAction.sender(self)]

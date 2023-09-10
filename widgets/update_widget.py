@@ -205,7 +205,7 @@ class UpdateWidget(QFrame):
             self.update_button.setText("Checking the commandfile...")
             with open("_temp/commandfile.txt") as file:
                 for i in file.readlines():
-                    if "://" in i or r":\\" in i or "../" in i and "NOTIFIY" not in i:
+                    if "://" in i or r":\\" in i or "../" in i or "..\ ".strip() in i and "NOTIFIY" not in i:
                         self.update_button.clicked.connect(self.update_program)
                         winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
                         self.update_button.setText("Update")

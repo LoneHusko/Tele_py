@@ -18,8 +18,10 @@ class ConfirmUpdateWidget(QFrame):
 
         button_layout = QHBoxLayout()
         self.deny_button = QPushButton("No")
+        self.deny_button.setObjectName("left_btn")
         self.deny_button.setFixedHeight(30)
         self.accept_button = QPushButton("Yes")
+        self.accept_button.setObjectName("right_btn")
         self.accept_button.setFixedHeight(30)
         button_layout.addWidget(self.deny_button)
         button_layout.addWidget(self.accept_button)

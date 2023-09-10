@@ -9,10 +9,7 @@ QProgressBar {
     padding: 3px;
     background-color: #111a2e;
     border: 1px solid #475a85;
-    border-bottom: 1px solid transparent;
     border-radius: 5px;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
     text-align: center;
     color: transparent;
     height: 30px;
@@ -76,7 +73,7 @@ QLabel {
 }
 #error{
     color:red;
-    background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #540612, stop:1 transparent);
+    background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #44050f, stop:1 transparent);
 }
 QPushButton {
     border: none;
@@ -99,8 +96,16 @@ QPushButton {
     text-decoration: line-through;
     background-color: #203155;
 }
-QPushButton:hover, #menu QPushButton:hover {
+QPushButton:hover, #menu QPushButton:hover,  #menu #right_btn:hover, #menu #left_btn:hover {
     background-color: #355494;
+}
+#menu #left_btn {
+    margin-right: 0;
+    background-color: qlineargradient( x1:1 y1:0, x2:0 y2:0, stop:0 #355494, stop:1 transparent);
+}
+#menu #right_btn {
+    margin-left: 0;
+    background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #355494, stop:1 transparent);
 }
 
 #menu #activeBtn {
@@ -112,13 +117,15 @@ QPushButton:hover, #menu QPushButton:hover {
 QPushButton:pressed {
     background-color: rgb(17, 17, 17);
 }
-#menu QPushButton:pressed {
+#menu QPushButton:pressed, #menu #right_btn:pressed, #menu #left_btn:pressed {
     background-color: rgba(17, 17, 17, 0.6);
 }
+
 QGridLayout {
     background: transparent;
 }
-QScrollArea {
+QScrollArea, #scroll {
+    border: none;
     background: transparent;
 }
 QScrollBar:vertical {

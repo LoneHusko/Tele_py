@@ -4,8 +4,11 @@ from PySide2.QtWidgets import *
 import os, winsound, threading, shutil
 
 class DownloadWidget(QFrame):
-    def __init__(self):
-        super(DownloadWidget, self).__init__()
+    def __init__(self, parent = None):
+        super(DownloadWidget, self).__init__(parent)
+        self.resize(400,400)
+        self.progressbar = None
+        self.hide_progressbar = None
         self.setObjectName("menu")
         self.downloader = None
         self.menu_dropdown_update_func = None
@@ -90,18 +93,6 @@ class DownloadWidget(QFrame):
         self.message_error.setVisible(True)
         self.message_error.setText(text)
 
-    def progressbar(self):
-        self.bar = QProgressBar(parent=self)
-        self.bar.setMinimum(0)
-        self.bar.setMaximum(100)
-        self.bar.setFixedHeight(30)
-        self.bar.setFixedWidth(300)
-        bar_x = (self.width() - self.bar.width()) / 2
-        bar_y = self.height() - self.bar.height()
-
-        # Set the position of the progress bar
-        self.bar.move(bar_x, bar_y)
-        self.bar.show()
 
     def check_packs(self):
         if os.path.exists(f"downloads/{self.stickerURL.text()}") and self.stickerURL.text() != "":
@@ -147,25 +138,23 @@ class DownloadWidget(QFrame):
                     else:
                         with open(f"downloads/{name}/customname", "wt") as f:
                             f.write(pack["title"])
-                    self.bar.hide()
                     self.succes("Download completed!")
                     winsound.PlaySound("utils/success.wav", winsound.SND_ASYNC)
                     self.menu_dropdown_update_func()
+                    self.hide_progressbar()
                 else:
-                    self.bar.hide()
                     self.error("Invalid URL!")
+                    self.hide_progressbar()
                     winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
 
             except Exception as exception:
                 print(exception)
-                self.message_label.setObjectName("error")
-                self.bar.hide()
+                self.hide_progressbar()
                 self.error("Download failed! Please check the token and the URL!")
                 winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
 
         x = threading.Thread(target=thread)
 
         self.progressbar()
-        self.bar.setMaximum(0)
 
         x.start()
