@@ -76,6 +76,10 @@ class Stickers(QMainWindow):
 
         if os.path.exists(f"utils/{self.styleLocation}/style_main.css"):
             flags = Qt.WindowFlags(Qt.FramelessWindowHint)
+            self.menu_widget.style_sheet = self.styleLocation
+            self.menu_widget.qLoad.setIcon(QIcon(f"utils/{self.styleLocation}/load_stickers.png"))
+            self.menu_widget.browseButton.setIcon(QIcon(QIcon(f"utils/{self.styleLocation}/browse.png")))
+            self.menu_widget.downloadButton.setIcon(QIcon(f"utils/{self.styleLocation}/plus.png"))
             self.setWindowFlags(flags)
             with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
                 self.setStyleSheet(str(style.read()))
@@ -494,6 +498,7 @@ class Stickers(QMainWindow):
         except RuntimeError:
             pass
 
+        self.settings_widget.scroll.verticalScrollBar().setValue(0)
         self.settings_widget.maxFileIn.setText(None)
         self.settings_widget.columnsIn.setText(None)
         self.settings_widget.applyStyleBtn.clicked.connect(self.apply_style)
@@ -584,14 +589,13 @@ class Stickers(QMainWindow):
     def download_stickers(self):
         self.download_widget.raise_()
         self.download_widget.message("")
-        def anim():
-                self.menu_widget.move(500,50)
-                for i in range(171):
-                    if i%10==0:
-                        self.menu_widget.move(i+330, 50)
-                        time.sleep(0.001)
 
-                self.menu_widget.setVisible(False)
+        def anim():
+            self.menu_widget.move(430, 50)
+            for i in range(76):
+                if i % 10 == 0:
+                    self.menu_widget.move(430 + i, 50)
+                    time.sleep(0.001)
         anim_thread = threading.Thread(target=anim)
         anim_thread.start()
         self.backBtn.setVisible(True)
@@ -634,13 +638,14 @@ class Stickers(QMainWindow):
         self.load_stickers()
     def quick_load_dropdown(self):
         def close():
-            self.menu_close()
+            self.menu_close(delay=.1)
             self.scroll.setVisible(True)
+
             def anim():
-                self.menu_widget.move(500,50)
-                for i in range(171):
-                    if i%10==0:
-                        self.menu_widget.move(i+330, 50)
+                self.menu_widget.move(430, 50)
+                for i in range(76):
+                    if i % 10 == 0:
+                        self.menu_widget.move(430 + i, 50)
                         time.sleep(0.001)
 
                 self.menu_widget.setVisible(False)
@@ -658,6 +663,9 @@ class Stickers(QMainWindow):
                 menu.setStyleSheet(str(style.read()))
         except:
             pass
+
+        menu.addAction("Load Stickers").setEnabled(False)
+        menu.addSeparator()
         name = "Favourites"
         action = QAction(name)
         action.triggered.connect(self.quick_load_prepare)
@@ -704,6 +712,9 @@ class Stickers(QMainWindow):
                 menu.setStyleSheet(str(style.read()))
         except:
             pass
+
+        menu.addAction("Manage Stickers").setEnabled(False)
+        menu.addSeparator()
         if os.path.exists("downloads"):
             folders = [ name for name in os.listdir("downloads/") if os.path.isdir(os.path.join("downloads/", name)) ]
             if len(folders):
@@ -747,17 +758,18 @@ class Stickers(QMainWindow):
             self.overlay_widget.move(self.scroll.pos())
             self.overlay_widget.setVisible(True)
             def anim():
-                for i in range(21):
+                for i in range(11):
                     self.blur.setBlurRadius(i)
                     time.sleep(0.01)
             anim_thread = threading.Thread(target=anim)
             anim_thread.start()
 
-    def menu_close(self):
+    def menu_close(self, delay = 0):
         self.is_menu_open = False
         def anim():
-            for i in range(21):
-                self.blur.setBlurRadius(21 - i)
+            time.sleep(delay)
+            for i in range(11):
+                self.blur.setBlurRadius(11 - i)
                 time.sleep(0.01)
         self.overlay_widget.setVisible(False)
         anim_thread = threading.Thread(target=anim)
@@ -767,7 +779,7 @@ class Stickers(QMainWindow):
         def anim():
             self.menu_widget.move(500,50)
             self.menu_widget.setVisible(True)
-            for i in range(171):
+            for i in range(76):
                 if i%10==0:
                     self.menu_widget.move(500-i, 50)
                     time.sleep(0.001)
@@ -776,10 +788,10 @@ class Stickers(QMainWindow):
         self.menu_open()
         def close():
             def anim():
-                self.menu_widget.move(500,50)
-                for i in range(171):
-                    if i%10==0:
-                        self.menu_widget.move(i+330, 50)
+                self.menu_widget.move(430, 50)
+                for i in range(76):
+                    if i % 10 == 0:
+                        self.menu_widget.move(430 + i, 50)
                         time.sleep(0.001)
 
                 self.menu_widget.setVisible(False)
@@ -790,22 +802,13 @@ class Stickers(QMainWindow):
             self.loadStickersBtn.setVisible(True)
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(self.close_window)
+        try: self.menu_widget.customContextMenuRequested.disconnect()
+        except: pass
         self.menu_widget.customContextMenuRequested.connect(close)
 
         try: self.menu_widget.browseButton.clicked.disconnect()
         except: pass
         self.menu_widget.browseButton.clicked.connect(self.set_sticker_path)
-        # try: self.menu_widget.setButton.clicked.disconnect()
-        # except: pass
-        # self.menu_widget.setButton.clicked.connect(self.check_stickers)
-        # self.menu_widget.setButton.clicked.connect(close)
-        # try: self.menu_widget.favButton.clicked.disconnect()
-        # except: pass
-        # self.menu_widget.favButton.clicked.connect(self.load_favourites)
-        # self.menu_widget.favButton.clicked.connect(close)
-        # try: self.menu_widget.clearButton.clicked.disconnect()
-        # except: pass
-        # self.menu_widget.clearButton.clicked.connect(self.unload_stickers)
         try: self.menu_widget.downloadButton.clicked.disconnect()
         except: pass
         self.menu_widget.downloadButton.clicked.connect(self.download_stickers)
@@ -825,13 +828,11 @@ class Stickers(QMainWindow):
 
     def manage_stickers(self):
         def anim():
-            self.menu_widget.move(500, 50)
-            for i in range(171):
+            self.menu_widget.move(430, 50)
+            for i in range(76):
                 if i % 10 == 0:
-                    self.menu_widget.move(i + 330, 50)
+                    self.menu_widget.move(430 + i, 50)
                     time.sleep(0.001)
-
-            self.menu_widget.setVisible(False)
 
         anim_thread = threading.Thread(target=anim)
         anim_thread.start()
@@ -921,18 +922,18 @@ class Stickers(QMainWindow):
         self.path = QFileDialog.getExistingDirectory(self, "Select Sticker Folder")
         if len(self.path):
             self.load_stickers()
-            def anim():
-                self.menu_widget.move(500, 50)
-                for i in range(171):
-                    if i % 10 == 0:
-                        self.menu_widget.move(i + 330, 50)
-                        time.sleep(0.001)
 
+            def anim():
+                self.menu_widget.move(430, 50)
+                for i in range(76):
+                    if i % 10 == 0:
+                        self.menu_widget.move(430 + i, 50)
+                        time.sleep(0.001)
                 self.menu_widget.setVisible(False)
 
             anim_thread = threading.Thread(target=anim)
             anim_thread.start()
-            self.menu_close()
+            self.menu_close(delay=.1)
             self.scroll.setVisible(True)
             self.widget.setVisible(True)
             self.settings.setVisible(True)
