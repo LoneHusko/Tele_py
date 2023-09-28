@@ -115,7 +115,7 @@ class Stickers(QMainWindow):
         self.message.setFixedHeight(30)
         self.message.setFixedWidth(370)
         pack = ""
-        if self.path == "utils/favourites/":
+        if self.path == "utils/favourites/" or self.path == "utils/favourites":
             pack = "Favourites"
         elif os.path.exists(self.path+"/customname"):
             with open(self.path+"/customname") as f:
@@ -944,14 +944,17 @@ class Stickers(QMainWindow):
                 styleSheet = style
         except FileNotFoundError:
             pass
-        self.message.setText("Loading, please wait...")
-        self.progressbar()
-        self.bar.setMaximum(100)
         if os.path.exists(self.path):
             br = False
             onlyfiles = self.get_files(self.path)
+            if not onlyfiles:
+                self.drop_error(f"No files found at {self.path}")
+                return
             bar_value = 0
             if not self.stickersLoaded and len(self.path):
+                self.message.setText("Loading, please wait...")
+                self.progressbar()
+                self.bar.setMaximum(100)
                 config_object = ConfigParser()
                 config_object.read("utils/config.ini")
                 settings = config_object["SETTINGS"]
