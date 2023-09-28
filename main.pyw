@@ -12,7 +12,6 @@ from modules import downloader
 from widgets import (update_widget, settings_widget, download_widget, menu_widget, managestickerpack_widget,
                      confirm_widget)
 from io import BytesIO
-from PIL import Image
 
 VERSION = "indev"
 FIRST = False #currently unused
@@ -277,7 +276,7 @@ class Stickers(QMainWindow):
         notification.show()
         def playsound():
             time.sleep(0.05)
-            winsound.PlaySound("utils/notify.wav", winsound.SND_ASYNC)
+            winsound.PlaySound("utils/notify.wav" if not isError else "utils/error.wav", winsound.SND_ASYNC)
         def thread():
             for i in range(40):
                 notification.move(100, 500-i+1)
@@ -416,11 +415,6 @@ class Stickers(QMainWindow):
             self.unload_stickers()
             self.drop_error(f"File not found! ({sticker_location})")
     def copy_sticker(self):
-        def send_to_clipboard(clip_type, data):
-            clp.OpenClipboard()
-            clp.EmptyClipboard()
-            clp.SetClipboardData(clip_type, data)
-            clp.CloseClipboard()
         file_path = self.stickers[QPushButton.sender(self)]
         if os.path.exists(file_path):
             config_object = ConfigParser()
@@ -429,23 +423,15 @@ class Stickers(QMainWindow):
             if settings["copy_method"] == "dc":
                 clp.OpenClipboard()
                 clp.EmptyClipboard()
-                # This works for Discord, but not for Paint.NET:
                 wide_path = os.path.abspath(file_path).encode('utf-16-le') + b'\0'
                 clp.SetClipboardData(clp.RegisterClipboardFormat('FileNameW'), wide_path)
                 clp.CloseClipboard()
             elif settings["copy_method"] == "gimp":
-                image = Image.open(file_path)
-
-                output = BytesIO()
-                image.convert("RGBA").save(output, "BMP")
-                data = output.getvalue()[14:]
-                output.close()
-
-                send_to_clipboard(clp.CF_DIB, data)
+                self.notify("Unsupported copy method!", isError=True)
+                return
             elif settings["copy_method"] == "cc":
                 subprocess.run(["modules\clipcopy.exe", file_path], shell=True)
 
-                # os.system(f"modules/clipcopy.exe {file_path}")
 
 
             print(f"Button: {QPushButton.sender(self)}")

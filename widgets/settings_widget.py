@@ -87,6 +87,7 @@ class SettingsWidget(QFrame):
         self.dcComp.setFixedHeight(30)
 
         self.gimpComp = QPushButton("Gimp")
+        self.gimpComp.setEnabled(False)
         self.gimpComp.clicked.connect(self.gimp_copy)
         self.gimpComp.setFixedHeight(30)
 
