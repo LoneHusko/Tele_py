@@ -10,7 +10,6 @@ When you click on a sticker it gets copied to the system's clipboard. You can th
  - Facebook Messenger
  - Google Chat (With some issues)
  
-Is also compatible with [Gimp](https://www.gimp.org) image editor.
 ___
 
 # Getting started
