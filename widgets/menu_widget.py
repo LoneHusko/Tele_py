@@ -39,7 +39,9 @@ class MenuWidget(QFrame):
 
     def manage_packs(self):
         print(self.qLoad.menu().pos())
-        self.edit_menu.move(1150, 489)
+        global_pos = self.qLoad.mapToGlobal(self.qLoad.pos())
+        print(global_pos)
+        self.edit_menu.move(global_pos.x()-10, global_pos.y()-70)
         self.edit_menu.show()
         def wait():
             while self.edit_menu.isVisible():

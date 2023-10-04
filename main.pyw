@@ -44,6 +44,7 @@ class Stickers(QMainWindow):
 
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon('utils/icon.png'))
+        self.tray_icon.setToolTip("Tele-py")
         self.tray_icon.show()
 
 
@@ -572,18 +573,18 @@ class Stickers(QMainWindow):
         self.load_stickers()
 
 
-    def download_stickers(self):
+    def download_stickers(self, ignore_menu = False):
         self.download_widget.raise_()
         self.download_widget.message("")
-
-        def anim():
-            self.menu_widget.move(430, 50)
-            for i in range(76):
-                if i % 10 == 0:
-                    self.menu_widget.move(430 + i, 50)
-                    time.sleep(0.001)
-        anim_thread = threading.Thread(target=anim)
-        anim_thread.start()
+        if not ignore_menu:
+            def anim():
+                self.menu_widget.move(430, 50)
+                for i in range(76):
+                    if i % 10 == 0:
+                        self.menu_widget.move(430 + i, 50)
+                        time.sleep(0.001)
+            anim_thread = threading.Thread(target=anim)
+            anim_thread.start()
         self.backBtn.setVisible(True)
         def close():
             self.menu_close()
@@ -762,9 +763,9 @@ class Stickers(QMainWindow):
         anim_thread.start()
 
     def menu(self):
+        self.menu_widget.setVisible(True)
         def anim():
             self.menu_widget.move(500,50)
-            self.menu_widget.setVisible(True)
             for i in range(76):
                 if i%10==0:
                     self.menu_widget.move(500-i, 50)
@@ -830,6 +831,7 @@ class Stickers(QMainWindow):
             self.manage_stickerpack_widget.delete_button.setText("Delete")
             self.manage_stickerpack_widget.delete_button.clicked.connect(delete_question)
         def delete():
+            delete_restore()
             removable = path.split("/")[0]+"/"+path.split("/")[-2]
             shutil.rmtree(removable)
             self.notify(text="Pack deleted!")
@@ -864,8 +866,9 @@ class Stickers(QMainWindow):
             self.manage_stickerpack_widget.setVisible(False)
             self.menu()
         def update_pack():
-            back()
-            self.download_stickers()
+            self.backBtn.setVisible(False)
+            self.manage_stickerpack_widget.setVisible(False)
+            self.download_stickers(ignore_menu=True)
             self.download_widget.stickerURL.setText(pack_link)
             self.download_widget.download()
         path = self.packs[QPushButton.sender(self)]
