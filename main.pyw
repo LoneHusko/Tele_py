@@ -1,5 +1,5 @@
 # import logging
-import sys, os, shutil, threading, winsound, time, subprocess, re
+import sys, os, shutil, threading, winsound, time, subprocess, re, traceback, signal
 
 from PySide2.QtCore import *
 from PySide2.QtGui import *
@@ -17,14 +17,16 @@ VERSION = "indev"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
+
 class Stickers(QMainWindow):
 
     def __init__(self):
         super(Stickers, self).__init__()
 
+        self.read_settings()
 
         self.settings_widget = settings_widget.SettingsWidget()
-
+        self.settings_widget.read_settings = self.read_settings
         self.download_widget = download_widget.DownloadWidget(parent=self)
         self.download_widget.move(50,50)
         self.download_widget.downloader = downloader
@@ -48,6 +50,8 @@ class Stickers(QMainWindow):
         self.tray_icon.show()
 
 
+
+
         # Create a custom context menu for the tray icon
         self.tray_menu = QMenu(self)
         self.tray_menu.addAction("Show Window", self.window_to_visible)
@@ -59,14 +63,10 @@ class Stickers(QMainWindow):
 
         #Basic settings
         self.setAttribute(Qt.WA_TranslucentBackground)
-        config_object = ConfigParser()
-        config_object.read("utils/config.ini")
-        settings = config_object["SETTINGS"]
-        self.styleLocation = "stylesheet/"+settings["stylesheet"]
+        self.styleLocation = "stylesheet/"+self.settings_object["stylesheet"]
         self.visible = True
         self.stickersLoaded = False
         self.path = ""
-        self.settings = []
         if os.path.exists("utils/lastpack"):
             with open("utils/lastpack", "r") as pack:
                 path = pack.read()
@@ -226,6 +226,22 @@ class Stickers(QMainWindow):
 
         if pack and settings["ask_last_pack"] == "1": self.load_last_pack(pack)
 
+
+        loading_label.hide()
+
+
+        self.notification = QLabel("asdasd",parent=self)
+        self.notification.raise_()
+        self.notification.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.notification.setFixedHeight(30)
+        self.notification.setFixedWidth(300)
+        self.notification.setAlignment(Qt.AlignCenter)
+        self.notification.setObjectName("notification")
+        self.notification.move(100, 500)
+        self.notification.setVisible(True)
+        self.notification_in_progress = False
+
+
     def load_last_pack(self, pack):
         self.menu_open()
         self.confirm_widget.setVisible(True)
@@ -266,32 +282,28 @@ class Stickers(QMainWindow):
         self.bar.show()
 
 
-    def notify(self, text, isError = False, timeout = 1):
-        notification = QLabel(text, parent=self)
-        notification.setAttribute(Qt.WA_TransparentForMouseEvents)
-        notification.setFixedHeight(30)
-        notification.setFixedWidth(300)
-        notification.setAlignment(Qt.AlignCenter)
-        notification.setObjectName("notification")
-        notification.move(100, 500)
-        notification.show()
-        def playsound():
-            time.sleep(0.05)
-            winsound.PlaySound("utils/notify.wav" if not isError else "utils/error.wav", winsound.SND_ASYNC)
-        def thread():
-            for i in range(40):
-                notification.move(100, 500-i+1)
-                time.sleep(0.01)
-            time.sleep(timeout)
-            for i in range(40):
-                notification.move(100, 460+i+1)
-                time.sleep(0.01)
-            notification.hide()
-            notification.deleteLater()
-        y = threading.Thread(target=playsound)
-        y.start()
-        x = threading.Thread(target=thread)
-        x.start()
+    def notify(self, text, isError = False, timeout = .5):
+        if not self.notification_in_progress:
+            self.notification_in_progress = True
+            self.notification.setText(text)
+            def playsound():
+                time.sleep(0.05)
+                winsound.PlaySound("utils/notify.wav" if not isError else "utils/error.wav", winsound.SND_ASYNC)
+            def thread():
+                for i in range(40):
+                    if i % 2 == 0:
+                        self.notification.move(100, 500-i+1)
+                        time.sleep(0.01)
+                time.sleep(timeout)
+                for i in range(40):
+                    if i % 2 == 0:
+                        self.notification.move(100, 460+i+1)
+                        time.sleep(0.01)
+                self.notification_in_progress = False
+            y = threading.Thread(target=playsound)
+            y.start()
+            x = threading.Thread(target=thread)
+            x.start()
 
     def animate_message(self, text, unanimated = None, isError = False):
         if isError:
@@ -418,9 +430,6 @@ class Stickers(QMainWindow):
     def copy_sticker(self):
         file_path = self.stickers[QPushButton.sender(self)]
         if os.path.exists(file_path):
-            config_object = ConfigParser()
-            config_object.read("utils/config.ini")
-            settings = config_object["SETTINGS"]
             if settings["copy_method"] == "dc":
                 clp.OpenClipboard()
                 clp.EmptyClipboard()
@@ -428,7 +437,7 @@ class Stickers(QMainWindow):
                 clp.SetClipboardData(clp.RegisterClipboardFormat('FileNameW'), wide_path)
                 clp.CloseClipboard()
             elif settings["copy_method"] == "gimp":
-                self.notify("Unsupported copy method!", isError=True)
+                self.notify("Unsupported copy method!", isError=True, timeout=2)
                 return
             elif settings["copy_method"] == "cc":
                 subprocess.run(["modules\clipcopy.exe", file_path], shell=True)
@@ -459,6 +468,7 @@ class Stickers(QMainWindow):
 
     def settings_menu(self):
         def close():
+            self.read_settings()
             self.settings.setVisible(True)
             self.loadStickersBtn.setVisible(True)
             self.scroll.setVisible(True)
@@ -466,6 +476,10 @@ class Stickers(QMainWindow):
             self.settings_widget.setVisible(False)
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(self.close_window)
+            self.settings_widget.applyStyleBtn.clicked.disconnect()
+            self.saveBtn.clicked.disconnect()
+            self.settings_widget.columnsIn.returnPressed.disconnect()
+            self.settings_widget.maxFileIn.returnPressed.disconnect()
 
         # Not the prettiest but it does the job
         try:
@@ -883,8 +897,11 @@ class Stickers(QMainWindow):
             pack_name = pack_link
         self.manage_stickerpack_widget.label.setText(f"Edit pack: {pack_name}")
 
-        self.manage_stickerpack_widget.link_label.setText("Pack's link: https://t.me/addstickers/"
-                                                           +self.packs[QPushButton.sender(self)].split("/")[-2])
+        self.manage_stickerpack_widget.link_label.setText(f"<p>Pack's link: <a style='color:#56acee' href='https://t.me/addstickers/"
+                                                          f"{self.packs[QPushButton.sender(self)].split('/')[-2]}'>"
+                                                          f"https://t.me/addstickers/"
+                                                          f"{self.packs[QPushButton.sender(self)].split('/')[-2]}"
+                                                          f"</a></p>")
 
         try: self.manage_stickerpack_widget.rename_button.clicked.disconnect()
         except: pass
@@ -936,7 +953,12 @@ class Stickers(QMainWindow):
             if os.path.isfile(os.path.join(path, f)):
                 if f.split(".")[-1].lower() in ["jpg", "png", "webp"]:
                     files.append(f)
-        sorted_files = sorted(files, key=lambda x: int(re.findall(r'\d+', x)[0]))
+
+        def get_numeric_part(filename):
+            match = re.findall(r'\d+', filename)
+            return int(match[0]) if match else 0
+
+        sorted_files = sorted(files, key=get_numeric_part)
         return sorted_files
 
     def load_stickers(self):
@@ -958,9 +980,6 @@ class Stickers(QMainWindow):
                 self.message.setText("Loading, please wait...")
                 self.progressbar()
                 self.bar.setMaximum(100)
-                config_object = ConfigParser()
-                config_object.read("utils/config.ini")
-                settings = config_object["SETTINGS"]
                 columns = int(settings["columns"])
                 width_height = 400/columns
                 if self.path[-1] != "/":
@@ -1074,38 +1093,44 @@ class Stickers(QMainWindow):
             self.move(self.x() + delta.x(), self.y() + delta.y())
             self.oldPosition = event.globalPos()
 
+    def read_settings(self):
+        config_object = ConfigParser()
+        config_object.read("utils/config.ini")
+        self.settings_object = config_object["SETTINGS"]
+        print("Settings were read!")
+
 if __name__ == '__main__':
     title = NAME+" "+VERSION+" Debug Console"
     print(f"{title:_^60}")
 
-    print("Checking directory \"favourites\"...", end="")
+    print("Checking directory \"favourites\"... ", end="")
     if not os.path.exists("utils/favourites"):
         print("Not found!")
-        print("Making directory \"favourites\"...", end="")
+        print("Creating directory \"favourites\"... ", end="")
         os.mkdir("utils/favourites")
         FIRST = True
     print("Done!")
 
-    print("Checking file \"lastpack\"...", end="")
+    print("Checking file \"lastpack\"... ", end="")
     if not os.path.exists("utils/lastpack"):
         print("Not found!")
-        print("Creating file \"lastpack\"...", end="")
+        print("Creating file \"lastpack\"... ", end="")
         with open("utils/lastpack", "a") as _:
             FIRST = True
     print("Done!")
 
-    print("Checking file \"bottoken\"...", end="")
+    print("Checking file \"bottoken\"... ", end="")
     if not os.path.exists("utils/bottoken"):
         print("Not found!")
-        print("Creating file \"bottoken\"...", end="")
+        print("Creating file \"bottoken\"... ", end="")
         with open("utils/bottoken", "a") as _:
             FIRST = True
     print("Done!")
 
-    print("Checking config file...", end="")
+    print("Checking config file... ", end="")
     if not os.path.exists("utils/config.ini"):
         print("Not found!")
-        print("Creating config file...", end="")
+        print("Creating config file... ", end="")
         with open("utils/config.ini", "a") as _:
             FIRST = True
             _.write("""[SETTINGS]
@@ -1116,10 +1141,11 @@ hides = 0
 stylesheet = distant_horizon
 disable_updater = 0
 update_url = https://api.github.com/repos/LoneHusko/Tele_py/releases/latest
-ask_last_pack = 1""")
+ask_last_pack = 1
+display_splash = 1""")
     else:
         print("Done!")
-        print("Checking keys...", end="")
+        print("Checking keys... ", end="")
         config_object = ConfigParser()
         config_object.read("utils/config.ini")
         config = config_object["SETTINGS"]
@@ -1130,7 +1156,8 @@ ask_last_pack = 1""")
                 "stylesheet": "distant_horizon",
                 "disable_updater": "0",
                 "update_url": "https://api.github.com/repos/LoneHusko/Tele_py/releases/latest",
-                "ask_last_pack": "1"}
+                "ask_last_pack": "1",
+                "display_splash": "1"}
         for i in keys.keys():
             if not config_object.has_option("SETTINGS", i):
                 config[i] = keys[i]
@@ -1141,10 +1168,22 @@ ask_last_pack = 1""")
     print("Done!")
     print(f"Command-line args: {sys.argv}")
     print("Launching application...")
+    config_object = ConfigParser()
+    config_object.read("utils/config.ini")
+    settings = config_object["SETTINGS"]
     title = "Debug prints below:"
     print(f"{title:_^60}")
     del title, keys, config_object, config
-    app = QApplication(sys.argv)
-    stickerWindow = Stickers()
-    stickerWindow.show()
-    app.exec_()
+    recovery_mode = False
+    for i in sys.argv:
+        if i in "--recovery -R":
+            recovery_mode = True
+    if not recovery_mode:
+        app = QApplication(sys.argv)
+        loading_label = QSplashScreen(QPixmap('utils/splash.png'))
+        if settings["display_splash"] == "1": loading_label.show()
+        stickerWindow = Stickers()
+        stickerWindow.show()
+        app.exec_()
+    elif recovery_mode:
+        print("Recovery Mode")
