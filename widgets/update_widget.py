@@ -113,7 +113,7 @@ class UpdateWidget(QFrame):
         self.check_for_updates_button.clicked.disconnect()
         def thread():
             try:
-                self.api_response = requests.get("https://api.github.com/repos/LoneHusko/Tele_py/releases/latest")
+                self.api_response = requests.get(self.update_url)
                 self.notes = markdown(self.api_response.json()["body"])
                 self.notes = self.notes.replace("\n", "<br>")
             except:
