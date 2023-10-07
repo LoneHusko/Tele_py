@@ -26,7 +26,6 @@ class Stickers(QMainWindow):
         self.read_settings()
 
         self.settings_widget = settings_widget.SettingsWidget()
-        self.settings_widget.read_settings = self.read_settings
         self.download_widget = download_widget.DownloadWidget(parent=self)
         self.download_widget.move(50,50)
         self.download_widget.downloader = downloader
