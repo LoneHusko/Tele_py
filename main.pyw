@@ -1,5 +1,4 @@
-# import logging
-import sys, os, shutil, threading, winsound, time, subprocess, re, traceback, signal
+import sys, os, shutil, threading, winsound, time, subprocess, re, traceback
 
 from PySide2.QtCore import *
 from PySide2.QtGui import *
@@ -11,20 +10,39 @@ from configparser import ConfigParser
 from modules import downloader
 from widgets import (update_widget, settings_widget, download_widget, menu_widget, managestickerpack_widget,
                      confirm_widget)
-from io import BytesIO
 
 VERSION = "indev"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
+def format_exception(exctype, value, traceback_obj):
+
+    exception_str = '\n' + ''.join(traceback.format_exception(exctype, value, traceback_obj))
+
+    return exception_str
+
+def exception_hook(exctype, value, traceback_obj):
+    time_stamp = time.time()
+    time_stamp = time.strftime("%Y_%m_%d__%H_%M_%S", time.localtime(time_stamp))
+    exception_str = format_exception(exctype, value, traceback_obj)
+    if not os.path.exists("reports"):
+        os.mkdir("reports")
+    with open(f"reports/{time_stamp}.txt", "w") as f:
+        f.write(exception_str)
+
+    QMessageBox.critical(None, "Error", f"<p>An unexpected error occurred: <pre>{str(value)}</pre><br>"
+                                        f"The application will quit. Please contact support.<br>"
+                                        f"A detailed error message has been saved here: <br>"
+                                        f"<pre><code>{os.path.abspath(f'reports/{time_stamp}.txt')}</code></pre></p>")
+
+    sys.__excepthook__(exctype, value, traceback_obj)
+    app.quit()
 
 class Stickers(QMainWindow):
 
     def __init__(self):
         super(Stickers, self).__init__()
-
         self.read_settings()
-
         self.settings_widget = settings_widget.SettingsWidget()
         self.download_widget = download_widget.DownloadWidget(parent=self)
         self.download_widget.move(50,50)
@@ -73,15 +91,14 @@ class Stickers(QMainWindow):
                 if os.path.exists(path):
                     self.path = path
 
-        if os.path.exists(f"utils/{self.styleLocation}/style_main.css"):
-            flags = Qt.WindowFlags(Qt.FramelessWindowHint)
-            self.menu_widget.style_sheet = self.styleLocation
-            self.menu_widget.qLoad.setIcon(QIcon(f"utils/{self.styleLocation}/load_stickers.png"))
-            self.menu_widget.browseButton.setIcon(QIcon(QIcon(f"utils/{self.styleLocation}/browse.png")))
-            self.menu_widget.downloadButton.setIcon(QIcon(f"utils/{self.styleLocation}/plus.png"))
-            self.setWindowFlags(flags)
-            with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
-                self.setStyleSheet(str(style.read()))
+        flags = Qt.WindowFlags(Qt.FramelessWindowHint)
+        self.menu_widget.style_sheet = self.styleLocation
+        self.menu_widget.qLoad.setIcon(QIcon(f"utils/{self.styleLocation}/load_stickers.png"))
+        self.menu_widget.browseButton.setIcon(QIcon(QIcon(f"utils/{self.styleLocation}/browse.png")))
+        self.menu_widget.downloadButton.setIcon(QIcon(f"utils/{self.styleLocation}/plus.png"))
+        self.setWindowFlags(flags)
+        with open(f"utils/{self.styleLocation}/style_main.css", "r") as style:
+            self.setStyleSheet(str(style.read()))
 
         self.setWindowTitle("Tele-py")
         self.resize(500, 500)
@@ -1099,6 +1116,8 @@ class Stickers(QMainWindow):
         print("Settings were read!")
 
 if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    sys.excepthook = exception_hook
     title = NAME+" "+VERSION+" Debug Console"
     print(f"{title:_^60}")
 
@@ -1178,11 +1197,10 @@ display_splash = 1""")
         if i in "--recovery -R":
             recovery_mode = True
     if not recovery_mode:
-        app = QApplication(sys.argv)
         loading_label = QSplashScreen(QPixmap('utils/splash.png'))
         if settings["display_splash"] == "1": loading_label.show()
         stickerWindow = Stickers()
         stickerWindow.show()
-        app.exec_()
+        sys.exit(app.exec_())
     elif recovery_mode:
         print("Recovery Mode")
