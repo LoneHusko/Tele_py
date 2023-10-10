@@ -492,10 +492,18 @@ class Stickers(QMainWindow):
             self.settings_widget.setVisible(False)
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(self.close_window)
-            self.settings_widget.applyStyleBtn.clicked.disconnect()
-            self.saveBtn.clicked.disconnect()
-            self.settings_widget.columnsIn.returnPressed.disconnect()
-            self.settings_widget.maxFileIn.returnPressed.disconnect()
+            try:
+                self.saveBtn.clicked.disconnect()
+            except RuntimeError:
+                pass
+            try:
+                self.settings_widget.columnsIn.returnPressed.disconnect()
+            except RuntimeError:
+                pass
+            try:
+                self.settings_widget.maxFileIn.returnPressed.disconnect()
+            except RuntimeError:
+                pass
 
         # Not the prettiest but it does the job
         try:
