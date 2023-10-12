@@ -16,11 +16,11 @@ class UpdateWidget(QFrame):
     def __init__(self, VERSION: str):
         super(UpdateWidget, self).__init__()
 
-        self.release_notes_widget = releasenotes_widget.ReleaseNotesWidget(parent=self)
+        self.release_notes_widget = releasenotes_widget.ReleaseNotesWidget()
         self.release_notes_widget.move(40,22)
+        self.release_notes_widget.scroll.verticalScrollBar().valueChanged.connect(self.check_scroll_value)
 
-        self.confirm_update_widget = updateconfirm_widget.ConfirmUpdateWidget(parent=self)
-        self.confirm_update_widget.move(40,125)
+        self.confirm_update_widget = updateconfirm_widget.ConfirmUpdateWidget(self.release_notes_widget, parent=self)
 
         self.notify_widget = notify_widget.NotifyWidget(parent=self)
         self.notify_widget.move(40,125)
@@ -73,9 +73,6 @@ class UpdateWidget(QFrame):
         self.check_for_updates_button.setFixedSize(QSize(300, 30))
         self.check_for_updates_button.clicked.connect(self.check_for_updates)
 
-        self.read_release_notes_button = QPushButton("Read release notes")
-        self.read_release_notes_button.setFixedSize(QSize(145, 30))
-        self.read_release_notes_button.clicked.connect(self.read_notes)
 
         self.update_button.setEnabled(False)
 
@@ -93,18 +90,24 @@ class UpdateWidget(QFrame):
         self.v_layout.addWidget(self.latest_version_label)
         self.v_layout.addLayout(self.h_layout)
         self.h_layout.addWidget(self.check_for_updates_button)
-        self.h_layout.addWidget(self.read_release_notes_button)
-        self.read_release_notes_button.setVisible(False)
         self.v_layout.addWidget(self.update_button)
 
 
         self.setLayout(self.v_layout)
 
+    def check_scroll_value(self):
+        if self.release_notes_widget.scroll.verticalScrollBar().maximum() == self.release_notes_widget.scroll.verticalScrollBar().value():
+            self.confirm_update_widget.accept_button.setEnabled(True)
+            self.confirm_update_widget.accept_button.setToolTip("")
+        else:
+            self.confirm_update_widget.accept_button.setEnabled(False)
+            self.confirm_update_widget.accept_button.setToolTip("Please read the release notes first")
+
     def read_notes(self):
         self.release_notes_widget.setVisible(True)
-        self.release_notes_widget.raise_()
-        self.release_notes_widget.release_notes_label.setText(self.notes.replace("   -","⠀   -"))#Contains blank unicode
-                                                                                                 #character
+        self.release_notes_widget.release_notes_label.setText(
+                                                              self.notes.replace('   -', '⠀   -')
+        )#Contains blank unicode character
 
 
     def check_for_updates(self):
@@ -133,8 +136,6 @@ class UpdateWidget(QFrame):
             if self.latest_version != self.current_version:
                 self.update_button.setEnabled(True)
                 self.update_available = True
-                self.check_for_updates_button.setFixedWidth(145)
-                self.read_release_notes_button.setVisible(True)
             else:
                 self.update_button.setEnabled(False)
                 self.update_available = False
@@ -352,17 +353,20 @@ class UpdateWidget(QFrame):
             return
         print(size)
 
-        self.confirm_update_widget.message_label.setText(f"A {size} sized package will be downloaded and extracted "
-                                                         f"automatically. The download time depends on your "
-                                                         f"internet connection speed but should be done under a few "
-                                                         f"minutes.\n"
-                                                         f"Please don't close the application untill asked to!\n"
-                                                         "The application will still be usable during the update. "
-                                                         "However the notifications will only be displayed if this page"
-                                                         " is open. "
-                                                         "You will hear a chime after the update is completed or if "
-                                                         "user action is needed.\n"
-                                                         f"Do you wish to continue?")
+        self.read_notes()
+        self.release_notes_widget.release_notes_label.setText(self.release_notes_widget.release_notes_label.text() +
+                                                     "<p><hr>"
+                                                     f"A {size} sized package will be downloaded and extracted "
+                                                     f"automatically. The download time depends on your "
+                                                     f"internet connection speed but should be done under a few "
+                                                     f"minutes.<br>"
+                                                     f"Please don't close the application untill asked to!<br>"
+                                                     "The application will still be usable during the update. "
+                                                     "However the notifications will only be displayed if this page"
+                                                     " is open. "
+                                                     "You will hear a chime after the update is completed or if "
+                                                     "user action is needed.<br>"
+                                                     f"Do you wish to continue?</p>")
         self.confirm_update_widget.setVisible(True)
         self.confirm_update_widget.raise_()
         try:

@@ -492,6 +492,7 @@ class Stickers(QMainWindow):
             self.settings_widget.setVisible(False)
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(self.close_window)
+            self.settings_widget.customContextMenuRequested.disconnect()
             try:
                 self.saveBtn.clicked.disconnect()
             except RuntimeError:

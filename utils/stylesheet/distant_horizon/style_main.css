@@ -103,9 +103,15 @@ QPushButton:hover, #menu QPushButton:hover,  #menu #right_btn:hover, #menu #left
     margin-right: 0;
     background-color: qlineargradient( x1:1 y1:0, x2:0 y2:0, stop:0 #355494, stop:1 transparent);
 }
+#menu #left_btn:disabled{
+    background-color: qlineargradient( x1:1 y1:0, x2:0 y2:0, stop:0 #203155, stop:1 transparent);
+}
 #menu #right_btn {
     margin-left: 0;
     background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #355494, stop:1 transparent);
+}
+#menu #right_btn:disabled{
+    background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #203155, stop:1 transparent);
 }
 
 #menu #activeBtn {
