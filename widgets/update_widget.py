@@ -367,7 +367,6 @@ class UpdateWidget(QFrame):
                                                      "You will hear a chime after the update is completed or if "
                                                      "user action is needed.<br>"
                                                      f"Do you wish to continue?</p>")
-        self.release_notes_widget.release_notes_label.setText("")
         self.check_scroll_value()
         self.confirm_update_widget.setVisible(True)
         self.confirm_update_widget.raise_()
