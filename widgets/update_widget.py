@@ -206,7 +206,7 @@ class UpdateWidget(QFrame):
             self.update_button.setText("Checking the commandfile...")
             with open("_temp/commandfile.txt") as file:
                 for i in file.readlines():
-                    if "://" in i or r":\\" in i or "../" in i or "..\ ".strip() in i and "NOTIFIY" not in i:
+                    if ":/" in i or ":\\" in i or "../" in i or "..\ ".strip() in i and "NOTIFIY" not in i:
                         self.update_button.clicked.connect(self.update_program)
                         winsound.PlaySound("utils/error.wav", winsound.SND_ASYNC)
                         self.update_button.setText("Update")
@@ -367,6 +367,8 @@ class UpdateWidget(QFrame):
                                                      "You will hear a chime after the update is completed or if "
                                                      "user action is needed.<br>"
                                                      f"Do you wish to continue?</p>")
+        self.release_notes_widget.release_notes_label.setText("")
+        self.check_scroll_value()
         self.confirm_update_widget.setVisible(True)
         self.confirm_update_widget.raise_()
         try:
