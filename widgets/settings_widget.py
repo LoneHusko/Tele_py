@@ -12,7 +12,7 @@ class SettingsWidget(QFrame):
         self.setObjectName("menu")
 
         # Layout of Container Widget
-        self.v_layout = QVBoxLayout(self)
+        self.v_layout = QGridLayout(self)
         self.v_layout.setAlignment(Qt.AlignCenter)
         self.widget = QWidget()
         self.widget.setObjectName("no_bg_widget")
@@ -35,20 +35,17 @@ class SettingsWidget(QFrame):
         self.style_sheet = self.settings["stylesheet"]
 
         self.applyStyleBtn = QPushButton("Apply stylesheet")
-        self.applyStyleBtn.setFixedWidth(300)
         self.applyStyleBtn.setFixedHeight(30)
 
         self.styleListBtn = QPushButton("Select stylesheet")
         self.build_style_dropdown()
         self.menu.setObjectName("style_menu")
-        self.styleListBtn.setFixedWidth(300)
         self.styleListBtn.setFixedHeight(30)
 
         self.settingsMessage = QLabel("Settings")
         self.settingsMessage.setFixedHeight(30)
 
         columnsGroup = QGroupBox("Columns")
-        columnsGroup.setFixedWidth(300)
         columnsLayout = QHBoxLayout()
         columnsGroup.setLayout(columnsLayout)
         self.columnsIn = QLineEdit()
@@ -56,7 +53,6 @@ class SettingsWidget(QFrame):
         columnsLayout.addWidget(self.columnsIn)
 
         maxfileGroup = QGroupBox("Maximum readable stickers")
-        maxfileGroup.setFixedWidth(300)
         maxLayout = QHBoxLayout()
         maxfileGroup.setLayout(maxLayout)
         self.maxFileIn = QLineEdit()
@@ -65,7 +61,6 @@ class SettingsWidget(QFrame):
         self.maxFileIn.setValidator(QIntValidator())
 
         hidesGroup = QGroupBox("Close button action")
-        hidesGroup.setFixedWidth(300)
         hidesLayout = QHBoxLayout()
         hidesGroup.setLayout(hidesLayout)
         self.hideWindowBtn = QPushButton("Hide window")
@@ -103,7 +98,6 @@ class SettingsWidget(QFrame):
             self.clipcopy.setObjectName("activeBtn")
 
         groupComp = QGroupBox("Compatibility mode")
-        groupComp.setFixedWidth(300)
         compLayout = QGridLayout()
         compLayout.addWidget(self.dcComp, 0, 0)
         compLayout.addWidget(self.gimpComp, 0, 1)
@@ -127,17 +121,16 @@ class SettingsWidget(QFrame):
         self.updateBtn = QPushButton("Update")
         self.updateBtn.setFixedHeight(30)
 
-        self.settingsMessage.setFixedWidth(300)
 
-        self.v_layout.addWidget(self.settingsMessage)
-        self.v_layout.addWidget(columnsGroup)
-        self.v_layout.addWidget(maxfileGroup)
-        self.v_layout.addWidget(groupComp)
-        self.v_layout.addWidget(hidesGroup)
-        self.v_layout.addWidget(ask_pack_group)
-        self.v_layout.addWidget(self.styleListBtn)
-        self.v_layout.addWidget(self.applyStyleBtn)
-        self.v_layout.addWidget(self.updateBtn)
+        self.v_layout.addWidget(self.settingsMessage, 0, 0, 1, 2)
+        self.v_layout.addWidget(columnsGroup,1,0)
+        self.v_layout.addWidget(maxfileGroup, 1, 1)
+        self.v_layout.addWidget(groupComp, 2, 0)
+        self.v_layout.addWidget(hidesGroup, 2, 1)
+        self.v_layout.addWidget(ask_pack_group, 3, 0)
+        self.v_layout.addWidget(self.styleListBtn, 4, 0)
+        self.v_layout.addWidget(self.applyStyleBtn, 4, 1)
+        self.v_layout.addWidget(self.updateBtn, 5,0 ,1 ,2)
 
     def ask_pack(self):
         if self.ask_last_pack.objectName() == "activeBtn":

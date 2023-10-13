@@ -355,19 +355,18 @@ class UpdateWidget(QFrame):
 
         self.read_notes()
         self.release_notes_widget.release_notes_label.setText(self.release_notes_widget.release_notes_label.text() +
-                                                     "<p><hr>"
-                                                     f"A {size} sized package will be downloaded and extracted "
-                                                     f"automatically. The download time depends on your "
-                                                     f"internet connection speed but should be done under a few "
-                                                     f"minutes.<br>"
-                                                     f"Please don't close the application untill asked to!<br>"
-                                                     "The application will still be usable during the update. "
-                                                     "However the notifications will only be displayed if this page"
-                                                     " is open. "
-                                                     "You will hear a chime after the update is completed or if "
-                                                     "user action is needed.<br>"
-                                                     f"Do you wish to continue?</p>")
-        self.check_scroll_value()
+                                                      "<p><hr>"
+                                                      f"A {size} sized package will be downloaded and extracted "
+                                                      f"automatically. The download time depends on your "
+                                                      f"internet connection speed but should be done under a few "
+                                                      f"minutes.<br>"
+                                                      f"Please don't close the application untill asked to!<br>"
+                                                      "The application will still be usable during the update. "
+                                                      "However the notifications will only be displayed if this page"
+                                                      " is open. "
+                                                      "You will hear a chime after the update is completed or if "
+                                                      "user action is needed.<br>"
+                                                      f"Do you wish to continue?</p>")
         self.confirm_update_widget.setVisible(True)
         self.confirm_update_widget.raise_()
         try:
@@ -378,6 +377,7 @@ class UpdateWidget(QFrame):
             self.confirm_update_widget.deny_button.clicked.disconnect()
         except RuntimeError:
             pass
+        self.check_scroll_value()
         self.confirm_update_widget.accept_button.clicked.connect(lambda: update_thread.start())
         self.confirm_update_widget.accept_button.clicked.connect(lambda: self.confirm_update_widget.setVisible(False))
         self.confirm_update_widget.deny_button.clicked.connect(lambda: self.confirm_update_widget.setVisible(False))
