@@ -90,6 +90,18 @@ class SettingsWidget(QFrame):
         self.clipcopy.clicked.connect(self.cc_copy)
         self.clipcopy.setFixedHeight(30)
 
+        self.auto_check_for_updates_group = QGroupBox("Automatically check for updates")
+        self.auto_check_for_updates_group.setLayout(QVBoxLayout())
+        self.auto_check_for_updates_button = QPushButton("Enabled" if
+                                                              self.settings["auto_check_for_updates"] == "1"
+                                                              else "Disabled")
+        self.auto_check_for_updates_button.setObjectName("activeBtn" if
+                                                              self.settings["auto_check_for_updates"] == "1"
+                                                              else "")
+        self.auto_check_for_updates_button.setFixedHeight(30)
+        self.auto_check_for_updates_button.clicked.connect(self.auto_check_updates)
+        self.auto_check_for_updates_group.layout().addWidget(self.auto_check_for_updates_button)
+
         if self.settings["copy_method"] == "dc":
             self.dcComp.setObjectName("activeBtn")
         elif self.settings["copy_method"] == "gimp":
@@ -128,9 +140,32 @@ class SettingsWidget(QFrame):
         self.v_layout.addWidget(groupComp, 2, 0)
         self.v_layout.addWidget(hidesGroup, 2, 1)
         self.v_layout.addWidget(ask_pack_group, 3, 0)
+        self.v_layout.addWidget(self.auto_check_for_updates_group,3,1)
         self.v_layout.addWidget(self.styleListBtn, 4, 0)
         self.v_layout.addWidget(self.applyStyleBtn, 4, 1)
         self.v_layout.addWidget(self.updateBtn, 5,0 ,1 ,2)
+
+    def auto_check_updates(self):
+        if self.auto_check_for_updates_button.objectName() == "activeBtn":
+            self.auto_check_for_updates_button.setObjectName("")
+            self.auto_check_for_updates_button.setText("Disabled")
+            config_object = ConfigParser()
+            config_object.read("utils/config.ini")
+            settings = config_object["SETTINGS"]
+            settings["auto_check_for_updates"] = "0"
+
+            with open('utils/config.ini', 'w') as conf:
+                config_object.write(conf)
+        else:
+            self.auto_check_for_updates_button.setObjectName("activeBtn")
+            self.auto_check_for_updates_button.setText("Enabled")
+            config_object = ConfigParser()
+            config_object.read("utils/config.ini")
+            settings = config_object["SETTINGS"]
+            settings["auto_check_for_updates"] = "1"
+
+            with open('utils/config.ini', 'w') as conf:
+                config_object.write(conf)
 
     def ask_pack(self):
         if self.ask_last_pack.objectName() == "activeBtn":

@@ -222,6 +222,7 @@ class Stickers(QMainWindow):
         self.settings_widget.hideWindowBtn.clicked.connect(self.apply_style)
         self.settings_widget.closeWindowBtn.clicked.connect(self.apply_style)
         self.settings_widget.ask_last_pack.clicked.connect(self.apply_style)
+        self.settings_widget.auto_check_for_updates_button.clicked.connect(self.apply_style)
 
         self.blur = QGraphicsBlurEffect()
         self.scroll.setGraphicsEffect(self.blur)
@@ -230,7 +231,7 @@ class Stickers(QMainWindow):
         self.overlay_widget.setStyleSheet("")
         self.overlay_widget.setVisible(False)
 
-        #Todo: implement auto-check for updates
+
 
         self.centralWidget.setLayout(self.vLayout)
 
@@ -256,6 +257,14 @@ class Stickers(QMainWindow):
         self.notification.move(100, 500)
         self.notification.setVisible(True)
         self.notification_in_progress = False
+
+        if self.settings_object["auto_check_for_updates"] == "1":
+            def thread():
+                self.update_widget.check_for_updates(no_thread=True)
+                if self.update_widget.update_available:
+                    self.notify("An update is available", timeout=3)
+            x = threading.Thread(target=thread)
+            x.start()
 
 
     def load_last_pack(self, pack):
@@ -306,12 +315,12 @@ class Stickers(QMainWindow):
                 time.sleep(0.05)
                 winsound.PlaySound("utils/notify.wav" if not isError else "utils/error.wav", winsound.SND_ASYNC)
             def thread():
-                for i in range(40):
+                for i in range(41):
                     if i % 2 == 0:
                         self.notification.move(100, 500-i+1)
                         time.sleep(0.01)
                 time.sleep(timeout)
-                for i in range(40):
+                for i in range(41):
                     if i % 2 == 0:
                         self.notification.move(100, 460+i+1)
                         time.sleep(0.01)
@@ -550,10 +559,6 @@ class Stickers(QMainWindow):
     def update_program(self):
         self.update_widget.update_button.setText("Update")
         self.update_widget.message.setText("")
-        # if not self.update_widget.message_succes.text() == "Please restart the application!":
-        #     self.update_widget.message_error.setVisible(False)
-        #     self.update_widget.message.setVisible(True)
-        #     self.update_widget.bar.setVisible(False)
 
         self.settings_widget.setVisible(False)
         self.update_widget.setVisible(True)
@@ -1169,7 +1174,8 @@ stylesheet = distant_horizon
 disable_updater = 0
 update_url = https://api.github.com/repos/LoneHusko/Tele_py/releases/latest
 ask_last_pack = 1
-display_splash = 1""")
+display_splash = 1
+auto_check_for_updates = 1""")
     else:
         print("Done!")
         print("Checking keys... ", end="")
@@ -1184,7 +1190,8 @@ display_splash = 1""")
                 "disable_updater": "0",
                 "update_url": "https://api.github.com/repos/LoneHusko/Tele_py/releases/latest",
                 "ask_last_pack": "1",
-                "display_splash": "1"}
+                "display_splash": "1",
+                "auto_check_for_updates": "1"}
         for i in keys.keys():
             if not config_object.has_option("SETTINGS", i):
                 config[i] = keys[i]
