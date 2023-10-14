@@ -10,6 +10,10 @@ class ConfirmUpdateWidget(QFrame):
 
         self.setVisible(False)
 
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.close)
+
         self.release_notes_widget = release_notes_widget
 
         self.message_label = QLabel()
@@ -21,6 +25,7 @@ class ConfirmUpdateWidget(QFrame):
         self.deny_button = QPushButton("Cancel")
         self.deny_button.setObjectName("left_btn")
         self.deny_button.setFixedHeight(30)
+        self.deny_button.clicked.connect(self.close)
         self.accept_button = QPushButton("Update")
         self.accept_button.setToolTip("Please read the release notes first")
         self.accept_button.setEnabled(False)
@@ -32,6 +37,10 @@ class ConfirmUpdateWidget(QFrame):
         self.v_layout = QVBoxLayout()
         self.setLayout(self.v_layout)
         self.v_layout.addWidget(self.release_notes_widget)
+        # self.v_layout.addWidget(self.message_label)
         self.v_layout.addItem(spacer)
         self.v_layout.addLayout(button_layout)
         self.v_layout.setAlignment(Qt.AlignVCenter)
+
+    def close(self):
+        self.setVisible(False)

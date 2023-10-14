@@ -33,7 +33,7 @@ Click on any sticker then paste it into any chat platform.
 
 ### Previweing the stickers
 Right-click on any sticker to open the preview. You can also save it to you favourites from the preview. Right-click again to close.
-
+___
 #### If you experince any issue then please report it [here](https://github.com/LoneHusko/Tele_py/issues/new), but first make sure it hasn't been [already reported](https://github.com/LoneHusko/Tele_py/issues).
 Please give a detailed description and if possible attach screenshots.
 ___

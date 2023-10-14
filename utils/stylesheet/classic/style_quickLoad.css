@@ -1,0 +1,20 @@
+QMenu::item:selected {
+    background-color: #666666;
+}
+QMenu::item:pressed {
+    background-color: #111111;
+}
+QMenu::item {
+    color: #999999;
+}
+QMenu {
+    background-color: #182644;
+    border: 1px solid #999999;
+    border-radius: 5px;
+}
+QMenu::item:disabled {
+    margin: 3px;
+}
+QMenu::item:disabled:selected {
+    background-color: none;
+}

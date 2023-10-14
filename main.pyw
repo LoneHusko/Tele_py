@@ -11,7 +11,7 @@ from modules import downloader
 from widgets import (update_widget, settings_widget, download_widget, menu_widget, managestickerpack_widget,
                      confirm_widget)
 
-VERSION = "indev"
+VERSION = "v1.7.0"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
