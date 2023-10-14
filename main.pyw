@@ -223,6 +223,7 @@ class Stickers(QMainWindow):
         self.settings_widget.closeWindowBtn.clicked.connect(self.apply_style)
         self.settings_widget.ask_last_pack.clicked.connect(self.apply_style)
         self.settings_widget.auto_check_for_updates_button.clicked.connect(self.apply_style)
+        self.settings_widget.show_splash_button.clicked.connect(self.apply_style)
 
         self.blur = QGraphicsBlurEffect()
         self.scroll.setGraphicsEffect(self.blur)
@@ -258,7 +259,7 @@ class Stickers(QMainWindow):
         self.notification.setVisible(True)
         self.notification_in_progress = False
 
-        if self.settings_object["auto_check_for_updates"] == "1":
+        if self.settings_object["auto_check_for_updates"] == "1" and VERSION != "indev":
             def thread():
                 self.update_widget.check_for_updates(no_thread=True)
                 if self.update_widget.update_available:

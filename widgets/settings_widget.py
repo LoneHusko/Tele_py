@@ -102,6 +102,18 @@ class SettingsWidget(QFrame):
         self.auto_check_for_updates_button.clicked.connect(self.auto_check_updates)
         self.auto_check_for_updates_group.layout().addWidget(self.auto_check_for_updates_button)
 
+        self.show_splash_group = QGroupBox("Show splash")
+        self.show_splash_group.setLayout(QVBoxLayout())
+        self.show_splash_button = QPushButton("Enabled" if
+                                                              self.settings["display_splash"] == "1"
+                                                              else "Disabled")
+        self.show_splash_button.setObjectName("activeBtn" if
+                                                              self.settings["display_splash"] == "1"
+                                                              else "")
+        self.show_splash_button.setFixedHeight(30)
+        self.show_splash_button.clicked.connect(self.show_splash)
+        self.show_splash_group.layout().addWidget(self.show_splash_button)
+
         if self.settings["copy_method"] == "dc":
             self.dcComp.setObjectName("activeBtn")
         elif self.settings["copy_method"] == "gimp":
@@ -141,9 +153,33 @@ class SettingsWidget(QFrame):
         self.v_layout.addWidget(hidesGroup, 2, 1)
         self.v_layout.addWidget(ask_pack_group, 3, 0)
         self.v_layout.addWidget(self.auto_check_for_updates_group,3,1)
-        self.v_layout.addWidget(self.styleListBtn, 4, 0)
-        self.v_layout.addWidget(self.applyStyleBtn, 4, 1)
-        self.v_layout.addWidget(self.updateBtn, 5,0 ,1 ,2)
+        self.v_layout.addWidget(self.show_splash_group, 4, 0)
+        self.v_layout.addWidget(self.styleListBtn, 5, 0)
+        self.v_layout.addWidget(self.applyStyleBtn, 5, 1)
+        self.v_layout.addWidget(self.updateBtn, 6,0 ,1 ,2)
+
+
+    def show_splash(self):
+        if self.show_splash_button.objectName() == "activeBtn":
+            self.show_splash_button.setObjectName("")
+            self.show_splash_button.setText("Disabled")
+            config_object = ConfigParser()
+            config_object.read("utils/config.ini")
+            settings = config_object["SETTINGS"]
+            settings["display_splash"] = "0"
+
+            with open('utils/config.ini', 'w') as conf:
+                config_object.write(conf)
+        else:
+            self.show_splash_button.setObjectName("activeBtn")
+            self.show_splash_button.setText("Enabled")
+            config_object = ConfigParser()
+            config_object.read("utils/config.ini")
+            settings = config_object["SETTINGS"]
+            settings["display_splash"] = "1"
+
+            with open('utils/config.ini', 'w') as conf:
+                config_object.write(conf)
 
     def auto_check_updates(self):
         if self.auto_check_for_updates_button.objectName() == "activeBtn":
