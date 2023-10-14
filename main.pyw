@@ -1011,7 +1011,7 @@ class Stickers(QMainWindow):
                 self.message.setText("Loading, please wait...")
                 self.progressbar()
                 self.bar.setMaximum(100)
-                columns = int(settings["columns"])
+                columns = int(self.settings_object["columns"])
                 width_height = 400/columns
                 if self.path[-1] != "/":
                     self.path += "/"
@@ -1208,7 +1208,6 @@ auto_check_for_updates = 1""")
     settings = config_object["SETTINGS"]
     title = "Debug prints below:"
     print(f"{title:_^60}")
-    del title, keys, config_object, config
     recovery_mode = False
     for i in sys.argv:
         if i in "--recovery -R":
