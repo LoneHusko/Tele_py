@@ -11,7 +11,7 @@ from modules import downloader
 from widgets import (update_widget, settings_widget, download_widget, menu_widget, managestickerpack_widget,
                      confirm_widget)
 
-VERSION = "v1.7.0"
+VERSION = "indev"
 FIRST = False #currently unused
 NAME = "Tele-py"
 
@@ -30,7 +30,8 @@ def exception_hook(exctype, value, traceback_obj):
     with open(f"reports/{time_stamp}.txt", "w") as f:
         f.write(exception_str)
 
-    QMessageBox.critical(None, "Error", f"<p>An unexpected error occurred: <pre>{str(value)}</pre><br>"
+    QMessageBox.critical(None, "Error", f"<p>An unexpected error occurred: <pre>"
+                                        f"{str(exctype.__name__)}: {str(value)}</pre><br>"
                                         f"The application will quit. Please contact support.<br>"
                                         f"A detailed error message has been saved here: <br>"
                                         f"<pre><code>{os.path.abspath(f'reports/{time_stamp}.txt')}</code></pre></p>")
@@ -242,10 +243,7 @@ class Stickers(QMainWindow):
 
         self.is_menu_open = False
 
-        if pack and settings["ask_last_pack"] == "1": self.load_last_pack(pack)
 
-
-        loading_label.hide()
 
 
         self.notification = QLabel("asdasd",parent=self)
@@ -266,6 +264,11 @@ class Stickers(QMainWindow):
                     self.notify("An update is available", timeout=3)
             x = threading.Thread(target=thread)
             x.start()
+
+        if pack and settings["ask_last_pack"] == "1": self.load_last_pack(pack)
+
+
+        loading_label.hide()
 
 
     def load_last_pack(self, pack):
@@ -370,6 +373,7 @@ class Stickers(QMainWindow):
 
     def preview(self):
         def close():
+            original_button.setIcon(QIcon(self.stickers[original_button]))
             self.menu_close()
             self.loadStickersBtn.setVisible(True)
             self.settings.setVisible(True)
@@ -379,10 +383,19 @@ class Stickers(QMainWindow):
             self.widget.setVisible(True)
             widget.hide()
             widget.deleteLater()
+            preview_button.deleteLater()
+            favButton.deleteLater()
+
+
+        original_button = QPushButton.sender(self)
+
+
         dlayout = QVBoxLayout()
         dlayout.setAlignment(Qt.AlignCenter)
         widget = QWidget(parent=self)
 
+        widget.setFixedSize(self.scroll.size())
+        widget.move(self.scroll.pos())
 
         widget.setObjectName("preview")
         widget.setLayout(dlayout)
@@ -393,21 +406,21 @@ class Stickers(QMainWindow):
                 dlg.setStyleSheet(str(style.read()))
         except:
             pass
-        QBtn = QDialogButtonBox.Ok
 
-        button = QPushButton()
-        button.setContextMenuPolicy(Qt.CustomContextMenu)
-        button.customContextMenuRequested.connect(close)
-        button.setObjectName("no_bg_btn")
-        icon = QIcon(self.stickers[QPushButton.sender(self)])
-        button.setIcon(icon)
-        button.setMinimumSize(350,350)
-        button.setMaximumSize(350,350)
+        preview_button = QPushButton()
+        preview_button.setContextMenuPolicy(Qt.CustomContextMenu)
+        preview_button.customContextMenuRequested.connect(close)
+        preview_button.setObjectName("no_bg_btn")
+        icon = QIcon(self.stickers[original_button])
+
+        preview_button.setIcon(icon)
+        preview_button.setMinimumSize(350,350)
+        preview_button.setMaximumSize(350,350)
         size = QSize(350,350)
-        button.setIconSize(size)
-        self.stickers[button] = self.stickers[QPushButton.sender(self)]
-        button.clicked.connect(self.copy_sticker)
-        sticker_location = self.stickers[QPushButton.sender(self)]
+        preview_button.setIconSize(size)
+        self.stickers[preview_button] = self.stickers[original_button]
+        preview_button.clicked.connect(self.copy_sticker)
+        sticker_location = self.stickers[original_button]
         original = rf'{sticker_location}'
         file_name = original.split("/")[-1]
         def favourite():
@@ -427,7 +440,7 @@ class Stickers(QMainWindow):
                 favButton.clicked.connect(favourite)
 
 
-        dlayout.addWidget(button)
+        dlayout.addWidget(preview_button)
         hLayout = QHBoxLayout()
         dlayout.addLayout(hLayout)
         if os.path.exists("utils/favourites/"+file_name):
@@ -441,18 +454,18 @@ class Stickers(QMainWindow):
 
         self.vLayout.addLayout(dlayout)
         if os.path.exists(sticker_location):
-            print(f"Preview opened for: {sticker_location}")
             self.loadStickersBtn.setVisible(False)
             self.settings.setVisible(False)
             self.closeBtn.clicked.disconnect()
             self.closeBtn.clicked.connect(close)
-            widget.setFixedSize(self.scroll.size())
-            widget.move(self.scroll.pos())
             self.menu_open()
+            original_button.setIcon(QIcon())
             widget.show()
         else:
             self.unload_stickers()
             self.drop_error(f"File not found! ({sticker_location})")
+
+
     def copy_sticker(self):
         file_path = self.stickers[QPushButton.sender(self)]
         if os.path.exists(file_path):
@@ -1128,7 +1141,7 @@ class Stickers(QMainWindow):
         config_object = ConfigParser()
         config_object.read("utils/config.ini")
         self.settings_object = config_object["SETTINGS"]
-        print("Settings were read!")
+        print("Settings were read")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
