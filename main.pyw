@@ -372,8 +372,91 @@ class Stickers(QMainWindow):
             self.tray_menu.popup(QCursor.pos())
 
     def preview(self):
+
+        num_steps = 10
+        delay = 0.001
+
+        def animate_transition(original_button, preview_button, main_window, reversed=False):
+            preview_button_pos = get_rel_pos(preview_button, original_button.parentWidget(), main_window)
+            original_button_pos = get_rel_pos(original_button, original_button.parentWidget(), main_window)
+
+            # Calculate the differences in x and y
+            x_diff = preview_button_pos.x() - original_button_pos.x()
+            y_diff = preview_button_pos.y() - original_button_pos.y()
+
+            # Calculate the step size for both x and y
+            x_step = x_diff / (num_steps - 1)
+            y_step = y_diff / (num_steps - 1)
+
+            # Calculate the size step
+            size_step = (preview_button.size() - original_button.size()) / (num_steps - 1)
+
+            new_button.show()
+
+            def anim():
+                # Move the button and update the size in each iteration
+                if not reversed:
+                    for i in range(num_steps):
+                        new_x = original_button_pos.x() + i * x_step
+                        new_y = original_button_pos.y() + i * y_step
+                        new_size = original_button.size() + size_step * i
+
+                        new_button.move(QPointF(new_x, new_y).toPoint())
+                        new_button.setIconSize(new_size)
+                        new_button.resize(new_size)
+
+                        time.sleep(delay)
+
+                    # Set the final position and size
+                    new_button.move(preview_button_pos)
+                    new_button.setIconSize(preview_button.size())
+                    new_button.resize(preview_button.size())
+                    preview_button.show()
+                    favButton.show()
+                    new_button.hide()
+                else:
+                    preview_button.hide()
+                    favButton.hide()
+                    for i in range(num_steps):
+                        reversed_i = num_steps - 1 - i  # Calculate the reversed index
+                        new_x = original_button_pos.x() + reversed_i * x_step
+                        new_y = original_button_pos.y() + reversed_i * y_step
+                        new_size = original_button.size() + size_step * reversed_i
+
+                        new_button.move(QPointF(new_x, new_y).toPoint())
+                        new_button.setIconSize(new_size)
+                        new_button.resize(new_size)
+
+                        time.sleep(delay)
+
+                    # Set the final position and size
+                    new_button.move(original_button_pos)
+                    new_button.setIconSize(original_button.size())
+                    new_button.resize(original_button.size())
+
+                    original_button.setIcon(QIcon(self.stickers[original_button]))
+
+                    widget.hide()
+                    widget.deleteLater()
+                    preview_button.deleteLater()
+                    favButton.deleteLater()
+                    new_button.deleteLater()
+
+            x = threading.Thread(target=anim)
+            x.start()
+        def get_rel_pos(widget, parent, main_window):
+            # Get the widget's position relative to the scrollbar
+            global_position_widget = widget.mapToGlobal(QPoint(0, 0))
+            local_position_widget = parent.mapFromGlobal(global_position_widget)
+
+            # Get the scrollbar's position relative to the main window
+            global_position_scrollbar = parent.mapToGlobal(QPoint(0, 0))
+            local_position_scrollbar = main_window.mapFromGlobal(global_position_scrollbar)
+
+            # Combine the positions to get the widget's position relative to the main window
+            position_relative_to_main_window = local_position_scrollbar + local_position_widget
+            return position_relative_to_main_window
         def close():
-            original_button.setIcon(QIcon(self.stickers[original_button]))
             self.menu_close()
             self.loadStickersBtn.setVisible(True)
             self.settings.setVisible(True)
@@ -381,10 +464,7 @@ class Stickers(QMainWindow):
             self.closeBtn.clicked.connect(self.close_window)
             self.scroll.setVisible(True)
             self.widget.setVisible(True)
-            widget.hide()
-            widget.deleteLater()
-            preview_button.deleteLater()
-            favButton.deleteLater()
+            animate_transition(original_button, preview_button, self, reversed=True)
 
 
         original_button = QPushButton.sender(self)
@@ -412,6 +492,12 @@ class Stickers(QMainWindow):
         preview_button.customContextMenuRequested.connect(close)
         preview_button.setObjectName("no_bg_btn")
         icon = QIcon(self.stickers[original_button])
+
+        new_button = QPushButton(parent=self)
+        new_button.setObjectName("no_bg_btn")
+        new_button.setIcon(icon)
+        new_button.setContextMenuPolicy(Qt.CustomContextMenu)
+        new_button.customContextMenuRequested.connect(close)
 
         preview_button.setIcon(icon)
         preview_button.setMinimumSize(350,350)
@@ -461,6 +547,9 @@ class Stickers(QMainWindow):
             self.menu_open()
             original_button.setIcon(QIcon())
             widget.show()
+            preview_button.hide()
+            favButton.hide()
+            animate_transition(original_button, preview_button, self)
         else:
             self.unload_stickers()
             self.drop_error(f"File not found! ({sticker_location})")
