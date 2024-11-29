@@ -1,3 +1,5 @@
+# After almost 2 years of development and exactly 100 commits, this project has reached its end of life and is no longer developed or updated.
+
 # Tele-py
 Lets you send Telegram stickers on any chat platform.
 
