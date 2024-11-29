@@ -110,7 +110,7 @@ class UpdateWidget(QFrame):
         )#Contains blank unicode character
 
 
-    def check_for_updates(self):
+    def check_for_updates(self, no_thread = False):
         self.message.setText("Gathering release information...")
         self.check_for_updates_button.setText("Please wait...")
         self.check_for_updates_button.clicked.disconnect()
@@ -140,9 +140,11 @@ class UpdateWidget(QFrame):
                 self.update_button.setEnabled(False)
                 self.update_available = False
 
-
-        x = Thread(target=thread)
-        x.start()
+        if not no_thread:
+            x = Thread(target=thread)
+            x.start()
+        else:
+            thread()
 
     def download_file(self,url, download_dir="_temp"):
         if not os.path.exists(download_dir):
